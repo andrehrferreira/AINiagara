@@ -20,7 +20,7 @@
 - Phase 18: Quality Assurance (Build, tests, UE 5.3 compat)
 
 ### 🚧 Partially Completed
-- Phase 14: Reverse Engineering (60% - Niagara converter done, Cascade pending)
+- Phase 14: Reverse Engineering (80% - Niagara and Cascade converters done, modification workflow pending)
 - Phase 16: Testing (80% - Core tests done, UI tests pending)
 
 ### 📋 Pending Phases
@@ -131,7 +131,7 @@
 
 ## 14. Reverse Engineering Phase
 - [x] 14.1 Implement Niagara system to DSL converter
-- [ ] 14.2 Implement Cascade system to DSL converter
+- [x] 14.2 Implement Cascade system to DSL converter
 - [x] 14.3 Create DSL export functionality
 - [ ] 14.4 Implement DSL modification workflow (export → modify → regenerate)
 - [x] 14.5 Add export options to chat interface
@@ -212,8 +212,7 @@
 
 ## Next Priorities
 
-1. **Phase 14.2**: Cascade → DSL converter
-2. **Phase 14.4**: DSL modification workflow
-3. **Phase 16.6**: Integration tests for Cascade system generation
-4. **Phase 16.9-16.10**: UI tests
-5. **Phase 17.3-17.5**: Additional documentation
+1. **Phase 14.4**: DSL modification workflow (export → modify → regenerate)
+2. **Phase 16.6**: Integration tests for Cascade system generation
+3. **Phase 16.9-16.10**: UI tests
+4. **Phase 17.3-17.5**: Additional documentation
