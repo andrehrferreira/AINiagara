@@ -8,6 +8,8 @@
 #include "Core/NiagaraSystemGenerator.h"
 #include "Core/NiagaraSystemToDSLConverter.h"
 #include "Core/CascadeSystemGenerator.h"
+#include "Core/CascadeSystemToDSLConverter.h"
+#include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -587,21 +589,41 @@ FReply SAINiagaraChatWidget::OnExportDSLClicked()
 		return FReply::Handled();
 	}
 
+	// Try Niagara system first
 	UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(AssetData.GetAsset());
-	if (!NiagaraSystem)
-	{
-		ShowErrorNotification(TEXT("Selected asset is not a Niagara system."));
-		return FReply::Handled();
-	}
-
-	// Convert to DSL
+	UParticleSystem* ParticleSystem = nullptr;
+	
+	bool bConverted = false;
 	FVFXDSL DSL;
 	FString ConversionError;
-	bool bConverted = UNiagaraSystemToDSLConverter::ConvertSystemToDSL(
-		NiagaraSystem,
-		DSL,
-		ConversionError
-	);
+	FString SystemName;
+
+	if (NiagaraSystem)
+	{
+		SystemName = NiagaraSystem->GetName();
+		bConverted = UNiagaraSystemToDSLConverter::ConvertSystemToDSL(
+			NiagaraSystem,
+			DSL,
+			ConversionError
+		);
+	}
+	else
+	{
+		// Try Cascade system
+		ParticleSystem = Cast<UParticleSystem>(AssetData.GetAsset());
+		if (!ParticleSystem)
+		{
+			ShowErrorNotification(TEXT("Selected asset is not a Niagara or Cascade system."));
+			return FReply::Handled();
+		}
+
+		SystemName = ParticleSystem->GetName();
+		bConverted = UCascadeSystemToDSLConverter::ConvertSystemToDSL(
+			ParticleSystem,
+			DSL,
+			ConversionError
+		);
+	}
 
 	if (!bConverted)
 	{
@@ -627,7 +649,7 @@ FReply SAINiagaraChatWidget::OnExportDSLClicked()
 
 	TArray<FString> OutFilenames;
 	FString DefaultPath = FPaths::ProjectSavedDir() / TEXT("AINiagara") / TEXT("Exports");
-	FString DefaultFile = NiagaraSystem->GetName() + TEXT("_DSL.json");
+	FString DefaultFile = SystemName + TEXT("_DSL.json");
 
 	if (DesktopPlatform->SaveFileDialog(
 		FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
