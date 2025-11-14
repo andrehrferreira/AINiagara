@@ -19,16 +19,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Complete Real-time Preview System** - Phase 19 complete (12/12 tasks)
   - `UPreviewSystemManager` singleton class for preview management
   - Real-time preview updates in Niagara/Cascade editor viewport
-  - Preview replaces current system in viewport (não abre nova janela)
+  - Preview replaces current system in viewport (doesn't open new window)
   - Preview toggle button in chat interface (ON/OFF)
-  - Throttling (0.5s) para otimizar performance
-  - Error handling robusto com restauração de preview anterior
-  - DSL diff system (`UVFXDSLDiff`) para comparação de versões
-  - Exibição de mudanças detalhadas no chat
-  - Cleanup automático ao fechar chat
-  - 8 testes de integração para PreviewSystemManager
-  - Preview temporário (não persistido até save)
-  - Validação completa de DSL antes de atualizar preview
+  - Throttling (0.5s) for performance optimization
+  - Robust error handling with previous preview restoration
+  - DSL diff system (`UVFXDSLDiff`) for version comparison
+  - Detailed change display in chat
+  - Automatic cleanup on chat close
+  - 8 integration tests for PreviewSystemManager
+  - Temporary preview (not persisted until save)
+  - Complete DSL validation before preview update
 
 ## [0.11.0] - 2025-01-14
 
