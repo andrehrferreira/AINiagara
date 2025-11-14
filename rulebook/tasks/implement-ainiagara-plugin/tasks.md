@@ -14,13 +14,13 @@
 - Phase 7: DSL Processing
 - Phase 8: Niagara System Generation
 - Phase 9: Cascade System Generation
+- Phase 14: Reverse Engineering
 - Phase 15: History Management
 - Phase 16: Testing (Core modules, 60 tests)
 - Phase 17: Documentation (Major sections)
 - Phase 18: Quality Assurance (Build, tests, UE 5.3 compat)
 
 ### 🚧 Partially Completed
-- Phase 14: Reverse Engineering (80% - Niagara and Cascade converters done, modification workflow pending)
 - Phase 16: Testing (80% - Core tests done, UI tests pending)
 
 ### 📋 Pending Phases
@@ -133,7 +133,7 @@
 - [x] 14.1 Implement Niagara system to DSL converter
 - [x] 14.2 Implement Cascade system to DSL converter
 - [x] 14.3 Create DSL export functionality
-- [ ] 14.4 Implement DSL modification workflow (export → modify → regenerate)
+- [x] 14.4 Implement DSL modification workflow (export → modify → regenerate)
 - [x] 14.5 Add export options to chat interface
 
 ## 15. History Management Phase
@@ -215,7 +215,7 @@
 
 ## Next Priorities
 
-1. **Phase 14.4**: DSL modification workflow (export → modify → regenerate)
-2. **Phase 16.6**: Integration tests for Cascade system generation
-3. **Phase 16.9-16.10**: UI tests
-4. **Phase 17.3-17.5**: Additional documentation
+1. **Phase 16.9-16.10**: UI tests for chat interface and API configuration dialog
+2. **Phase 17.3-17.5**: Additional documentation (API docs, code comments, user guide)
+3. **Phase 10**: Texture Generation Tool (Gemini Imagen 3)
+4. **Phase 11**: Shader/Material Generation Tool
