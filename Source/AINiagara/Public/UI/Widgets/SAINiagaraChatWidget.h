@@ -37,6 +37,9 @@ private:
 	/** Send button */
 	TSharedPtr<SButton> SendButton;
 
+	/** Export DSL button */
+	TSharedPtr<SButton> ExportDSLButton;
+
 	/** Loading progress bar */
 	TSharedPtr<SProgressBar> LoadingBar;
 
@@ -50,6 +53,11 @@ private:
 	 * Handle send button click
 	 */
 	FReply OnSendClicked();
+
+	/**
+	 * Handle export DSL button click
+	 */
+	FReply OnExportDSLClicked();
 
 	/**
 	 * Handle enter key in input box

@@ -99,11 +99,11 @@
 - [ ] 13.5 Handle conversion errors gracefully
 
 ## 14. Reverse Engineering Phase
-- [ ] 14.1 Implement Niagara system to DSL converter
+- [x] 14.1 Implement Niagara system to DSL converter
 - [ ] 14.2 Implement Cascade system to DSL converter
-- [ ] 14.3 Create DSL export functionality
+- [x] 14.3 Create DSL export functionality
 - [ ] 14.4 Implement DSL modification workflow (export → modify → regenerate)
-- [ ] 14.5 Add export options to chat interface
+- [x] 14.5 Add export options to chat interface
 
 ## 15. History Management Phase
 - [x] 15.1 Design per-asset history storage structure

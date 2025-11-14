@@ -6,7 +6,17 @@
 #include "Core/VFXDSLParser.h"
 #include "Core/VFXPromptBuilder.h"
 #include "Core/NiagaraSystemGenerator.h"
+#include "Core/NiagaraSystemToDSLConverter.h"
 #include "Core/VFXDSL.h"
+#include "NiagaraSystem.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "ContentBrowserModule.h"
+#include "IContentBrowserSingleton.h"
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SButton.h"
@@ -81,6 +91,16 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 				SAssignNew(InputTextBox, SEditableTextBox)
 				.HintText(NSLOCTEXT("AINiagara", "ChatInputHint", "Describe the VFX effect you want to create..."))
 				.OnTextCommitted(this, &SAINiagaraChatWidget::OnInputTextCommitted)
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(ExportDSLButton, SButton)
+				.Text(NSLOCTEXT("AINiagara", "ExportDSLButton", "Export DSL"))
+				.ToolTipText(NSLOCTEXT("AINiagara", "ExportDSLTooltip", "Export current Niagara system to DSL format"))
+				.OnClicked(this, &SAINiagaraChatWidget::OnExportDSLClicked)
 			]
 			
 			+ SHorizontalBox::Slot()
@@ -497,5 +517,105 @@ void SAINiagaraChatWidget::ShowErrorNotification(const FString& Message)
 	{
 		HistoryManager->AddMessage(CurrentAssetPath, TEXT("system"), Message);
 	}
+}
+
+FReply SAINiagaraChatWidget::OnExportDSLClicked()
+{
+	// Get current asset path
+	FString AssetPath = CurrentAssetPath;
+	if (AssetPath.IsEmpty())
+	{
+		AssetPath = GetCurrentAssetPath();
+	}
+
+	if (AssetPath.IsEmpty())
+	{
+		ShowErrorNotification(TEXT("No asset selected. Please open a Niagara system first."));
+		return FReply::Handled();
+	}
+
+	// Try to load the Niagara system
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(*AssetPath);
+
+	if (!AssetData.IsValid())
+	{
+		ShowErrorNotification(FString::Printf(TEXT("Could not find asset: %s"), *AssetPath));
+		return FReply::Handled();
+	}
+
+	UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(AssetData.GetAsset());
+	if (!NiagaraSystem)
+	{
+		ShowErrorNotification(TEXT("Selected asset is not a Niagara system."));
+		return FReply::Handled();
+	}
+
+	// Convert to DSL
+	FVFXDSL DSL;
+	FString ConversionError;
+	bool bConverted = UNiagaraSystemToDSLConverter::ConvertSystemToDSL(
+		NiagaraSystem,
+		DSL,
+		ConversionError
+	);
+
+	if (!bConverted)
+	{
+		ShowErrorNotification(FString::Printf(TEXT("Failed to convert system to DSL: %s"), *ConversionError));
+		return FReply::Handled();
+	}
+
+	// Export to JSON
+	FString JsonOutput;
+	if (!UNiagaraSystemToDSLConverter::ExportDSLToJSON(DSL, JsonOutput, true))
+	{
+		ShowErrorNotification(TEXT("Failed to export DSL to JSON."));
+		return FReply::Handled();
+	}
+
+	// Show save file dialog
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	if (!DesktopPlatform)
+	{
+		ShowErrorNotification(TEXT("Desktop platform not available."));
+		return FReply::Handled();
+	}
+
+	TArray<FString> OutFilenames;
+	FString DefaultPath = FPaths::ProjectSavedDir() / TEXT("AINiagara") / TEXT("Exports");
+	FString DefaultFile = NiagaraSystem->GetName() + TEXT("_DSL.json");
+
+	if (DesktopPlatform->SaveFileDialog(
+		FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
+		NSLOCTEXT("AINiagara", "ExportDSLDialogTitle", "Export DSL").ToString(),
+		DefaultPath,
+		DefaultFile,
+		TEXT("JSON files (*.json)|*.json|All files (*.*)|*.*"),
+		EFileDialogFlags::None,
+		OutFilenames))
+	{
+		if (OutFilenames.Num() > 0)
+		{
+			FString SavePath = OutFilenames[0];
+			if (UNiagaraSystemToDSLConverter::ExportDSLToFile(DSL, SavePath))
+			{
+				FString SuccessMessage = FString::Printf(
+					TEXT("DSL exported successfully to:\n%s"),
+					*SavePath
+				);
+				ShowSuccessNotification(SuccessMessage);
+				
+				// Also add to chat history
+				AddMessageToHistory(TEXT("system"), FString::Printf(TEXT("Exported DSL:\n\n%s"), *JsonOutput), false, false);
+			}
+			else
+			{
+				ShowErrorNotification(TEXT("Failed to save DSL file."));
+			}
+		}
+	}
+
+	return FReply::Handled();
 }
 
