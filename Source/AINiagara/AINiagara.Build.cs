@@ -60,7 +60,10 @@ public class AINiagara : ModuleRules
 				"ContentBrowser",
 				"AutomationTest",
 				"UnrealEd",
-				"EditorSubsystem"
+				"EditorSubsystem",
+				"ImageWrapper",
+				"RenderCore",
+				"RHI"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

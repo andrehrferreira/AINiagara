@@ -165,6 +165,19 @@ private:
 	FText GetPreviewToggleText() const;
 
 	/**
+	 * Detect and process tool calls in AI response
+	 * @param ResponseText AI response text
+	 * @return True if tool call was detected and processed
+	 */
+	bool ProcessToolCalls(const FString& ResponseText);
+
+	/**
+	 * Process texture generation tool call
+	 * @param ToolParameters Tool call parameters JSON
+	 */
+	void ProcessTextureGenerationTool(TSharedPtr<FJsonObject> ToolParameters);
+
+	/**
 	 * Preview system manager instance
 	 */
 	UPROPERTY()

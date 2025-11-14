@@ -12,6 +12,7 @@
 #include "Core/VFXDSLValidator.h"
 #include "Core/PreviewSystemManager.h"
 #include "Core/VFXDSLDiff.h"
+#include "Tools/TextureGenerationHandler.h"
 #include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
@@ -23,6 +24,9 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonReader.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SButton.h"
@@ -231,6 +235,13 @@ FReply SAINiagaraChatWidget::OnSendClicked()
 			if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
 			{
 				HistoryManager->AddMessage(CurrentAssetPath, TEXT("assistant"), ResponseText);
+			}
+			
+			// First, check if response contains tool calls
+			if (ProcessToolCalls(ResponseText))
+			{
+				// Tool call was processed, don't try to parse as DSL
+				return;
 			}
 			
 			// Try to parse DSL from response
@@ -995,6 +1006,202 @@ void SAINiagaraChatWidget::UpdatePreview(const FVFXDSL& DSL)
 			ShowErrorNotification(TEXT("Preview update failed (unknown error). Previous preview maintained."));
 		}
 	}
+}
+
+bool SAINiagaraChatWidget::ProcessToolCalls(const FString& ResponseText)
+{
+	// Try to parse response as JSON to check for tool calls
+	TSharedPtr<FJsonObject> JsonObject;
+	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseText);
+
+	if (!FJsonSerializer::Deserialize(Reader, JsonObject) || !JsonObject.IsValid())
+	{
+		// Not JSON or invalid - no tool calls
+		return false;
+	}
+
+	// Check for function calls in Gemini API format
+	// Format: { "functionCall": { "name": "tool:texture", "args": {...} } }
+	if (JsonObject->HasTypedField<EJson::Object>(TEXT("functionCall")))
+	{
+		TSharedPtr<FJsonObject> FunctionCallObj = JsonObject->GetObjectField(TEXT("functionCall"));
+		if (FunctionCallObj.IsValid())
+		{
+			FString FunctionName = FunctionCallObj->GetStringField(TEXT("name"));
+			
+			if (FunctionName == TEXT("tool:texture"))
+			{
+				TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+				ProcessTextureGenerationTool(ArgsObj);
+				return true;
+			}
+			else if (FunctionName == TEXT("tool:shader"))
+			{
+				// TODO: Implement shader generation (Phase 11)
+				AddMessageToHistory(TEXT("system"), TEXT("Shader generation is not yet implemented (Phase 11)."), true, false);
+				return true;
+			}
+			else if (FunctionName == TEXT("tool:material"))
+			{
+				// TODO: Implement material generation (Phase 11)
+				AddMessageToHistory(TEXT("system"), TEXT("Material generation is not yet implemented (Phase 11)."), true, false);
+				return true;
+			}
+		}
+	}
+
+	// Check for candidates format with function calls
+	// Format: { "candidates": [{ "content": { "parts": [{ "functionCall": {...} }] } }] }
+	if (JsonObject->HasTypedField<EJson::Array>(TEXT("candidates")))
+	{
+		const TArray<TSharedPtr<FJsonValue>>& Candidates = JsonObject->GetArrayField(TEXT("candidates"));
+		if (Candidates.Num() > 0)
+		{
+			TSharedPtr<FJsonObject> CandidateObj = Candidates[0]->AsObject();
+			if (CandidateObj.IsValid())
+			{
+				TSharedPtr<FJsonObject> ContentObj = CandidateObj->GetObjectField(TEXT("content"));
+				if (ContentObj.IsValid())
+				{
+					const TArray<TSharedPtr<FJsonValue>>& Parts = ContentObj->GetArrayField(TEXT("parts"));
+					for (const TSharedPtr<FJsonValue>& PartValue : Parts)
+					{
+						TSharedPtr<FJsonObject> PartObj = PartValue->AsObject();
+						if (PartObj.IsValid() && PartObj->HasTypedField<EJson::Object>(TEXT("functionCall")))
+						{
+							TSharedPtr<FJsonObject> FunctionCallObj = PartObj->GetObjectField(TEXT("functionCall"));
+							FString FunctionName = FunctionCallObj->GetStringField(TEXT("name"));
+							
+							if (FunctionName == TEXT("tool:texture"))
+							{
+								TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+								ProcessTextureGenerationTool(ArgsObj);
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void SAINiagaraChatWidget::ProcessTextureGenerationTool(TSharedPtr<FJsonObject> ToolParameters)
+{
+	if (!ToolParameters.IsValid())
+	{
+		ShowErrorNotification(TEXT("Invalid texture generation parameters"));
+		return;
+	}
+
+	// Extract parameters
+	FTextureGenerationRequest Request;
+	
+	// Type (required)
+	if (!ToolParameters->TryGetStringField(TEXT("type"), Request.TextureType))
+	{
+		ShowErrorNotification(TEXT("Texture type is required"));
+		return;
+	}
+
+	// Prompt (build from context)
+	FString PromptDescription;
+	if (ToolParameters->TryGetStringField(TEXT("description"), PromptDescription))
+	{
+		Request.Prompt = PromptDescription;
+	}
+	else
+	{
+		Request.Prompt = FString::Printf(TEXT("Generate %s texture for VFX"), *Request.TextureType);
+	}
+
+	// Resolution (optional, default 512)
+	int32 Resolution = 512;
+	if (ToolParameters->TryGetNumberField(TEXT("resolution"), Resolution))
+	{
+		Request.Resolution = Resolution;
+	}
+
+	// Color scheme (optional)
+	ToolParameters->TryGetStringField(TEXT("colorScheme"), Request.ColorScheme);
+
+	// Frames (optional, default 1)
+	int32 Frames = 1;
+	if (ToolParameters->TryGetNumberField(TEXT("frames"), Frames))
+	{
+		Request.Frames = Frames;
+	}
+
+	// Target emitter (optional)
+	ToolParameters->TryGetStringField(TEXT("targetEmitter"), Request.TargetEmitterName);
+
+	// Show loading
+	FString LoadingMessage = FString::Printf(
+		TEXT("Generating %s texture (%dx%d, %d frame%s)..."),
+		*Request.TextureType,
+		Request.Resolution,
+		Request.Resolution,
+		Request.Frames,
+		Request.Frames > 1 ? TEXT("s") : TEXT("")
+	);
+	ShowLoading(true, LoadingMessage);
+	AddMessageToHistory(TEXT("system"), LoadingMessage, false, false);
+
+	// Generate texture
+	UTextureGenerationHandler::GenerateTexture(
+		Request,
+		FOnTextureGenerated::CreateLambda([this, Request](const FTextureGenerationResult& Result)
+		{
+			ShowLoading(false);
+
+			if (Result.bSuccess && Result.Texture)
+			{
+				FString SuccessMessage;
+				if (Result.FrameCount > 1)
+				{
+					SuccessMessage = FString::Printf(
+						TEXT("✅ Generated %s flipbook texture (%d frames, %dx%d)!"),
+						*Request.TextureType,
+						Result.FrameCount,
+						Result.Texture->GetSizeX(),
+						Result.Texture->GetSizeY()
+					);
+				}
+				else
+				{
+					SuccessMessage = FString::Printf(
+						TEXT("✅ Generated %s texture (%dx%d)!"),
+						*Request.TextureType,
+						Result.Texture->GetSizeX(),
+						Result.Texture->GetSizeY()
+					);
+				}
+				
+				AddMessageToHistory(TEXT("system"), SuccessMessage, false, true);
+				ShowSuccessNotification(SuccessMessage);
+
+				// TODO: Apply texture to target emitter if specified (Phase 10.10)
+				if (!Request.TargetEmitterName.IsEmpty())
+				{
+					AddMessageToHistory(TEXT("system"), 
+						FString::Printf(TEXT("Note: Automatic texture application to emitter '%s' is not yet implemented."), 
+						*Request.TargetEmitterName), 
+						false, false);
+				}
+			}
+			else
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("❌ Texture generation failed: %s"),
+					*Result.ErrorMessage
+				);
+				AddMessageToHistory(TEXT("system"), ErrorMessage, true, false);
+				ShowErrorNotification(ErrorMessage);
+			}
+		})
+	);
 }
 
 bool SAINiagaraChatWidget::IsPreviewEnabled() const
