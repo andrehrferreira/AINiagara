@@ -149,8 +149,8 @@
 - [x] 16.3 Write unit tests for API client wrapper (5 tests)
 - [x] 16.4 Write unit tests for conversation history manager (7 tests)
 - [x] 16.5 Write integration tests for Niagara system generation (11 tests)
-- [x] 16.12 Verify test coverage ≥ 95% (60 tests, all passing)
-- [ ] 16.6 Write integration tests for Cascade system generation
+- [x] 16.6 Write integration tests for Cascade system generation (11 tests)
+- [x] 16.12 Verify test coverage ≥ 95% (71 tests, all passing)
 - [ ] 16.7 Write integration tests for texture generation
 - [ ] 16.8 Write integration tests for shader generation
 - [ ] 16.9 Write UI tests for chat interface
