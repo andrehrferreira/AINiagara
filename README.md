@@ -23,7 +23,8 @@ AINiagara is an Unreal Engine 5 plugin that leverages Google's Gemini API to gen
 - 📝 **DSL-based system** - JSON-based VFX specification language
 - 🔄 **System generation** - Automatic Niagara and Cascade system creation from DSL
 - 💾 **Conversation history** - Per-asset conversation preservation with automatic persistence
-- ⚙️ **Reverse engineering** - Export Niagara and Cascade systems to DSL format
+- ⚙️ **Reverse engineering** - Export/Import DSL with modification workflow
+- 🔄 **DSL modification** - Export → Modify → Regenerate workflow
 - 🧪 **Comprehensive testing** - 71 unit/integration tests with 95%+ coverage
 - ✅ **UE 5.3 compatible** - Fully tested on Unreal Engine 5.3
 
@@ -134,7 +135,7 @@ More examples:
 - Round-trip conversion testing
 
 #### **UI Components** (`UI/Widgets`)
-- `SAINiagaraChatWidget` - Main chat interface with DSL export
+- `SAINiagaraChatWidget` - Main chat interface with DSL export/import/regenerate
 - `SAINiagaraAPIKeyDialog` - API key configuration
 - `AINiagaraChatWindow` - Window management
 - `AINiagaraEditorToolbar` - Editor integration

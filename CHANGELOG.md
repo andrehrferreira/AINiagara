@@ -12,9 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Shader/Material generation tool (Phase 11)
 - 3D Model integration (Phase 12)
 - Cascade to Niagara conversion (Phase 13)
-- DSL modification workflow (export → modify → regenerate) (Phase 14.4)
 
 ## [0.11.0] - 2025-01-14
+
+### Added - DSL Modification Workflow ✅
+- **Complete DSL Modification Workflow** - Phase 14.4 complete
+  - Import DSL button - Load DSL from JSON file
+  - Regenerate button - Regenerate system from loaded DSL
+  - Full workflow: Export → Modify → Import → Regenerate
+  - DSL validation before regeneration
+  - Preview DSL in chat history
+  - Support for both Niagara and Cascade systems
 
 ### Added - Cascade System Generation ✅
 - **Cascade System Generator** - Phase 9 complete
@@ -43,10 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Total: 71 tests (up from 60), all passing** ✅
 
 ### Changed
-- **Chat Widget** - Enhanced export functionality
-  - Now supports both Niagara and Cascade system export
+- **Chat Widget** - Enhanced with complete DSL workflow
+  - Export DSL button - Export current system to DSL
+  - Import DSL button - Import DSL from JSON file
+  - Regenerate button - Regenerate system from loaded DSL
+  - Now supports both Niagara and Cascade systems
   - Automatic system type detection
-  - Unified export workflow
+  - Unified export/import/regenerate workflow
 
 ### Technical Details
 - Uses `UParticleSystem` and `UParticleEmitter` classes

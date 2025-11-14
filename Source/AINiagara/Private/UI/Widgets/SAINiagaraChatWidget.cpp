@@ -9,6 +9,7 @@
 #include "Core/NiagaraSystemToDSLConverter.h"
 #include "Core/CascadeSystemGenerator.h"
 #include "Core/CascadeSystemToDSLConverter.h"
+#include "Core/VFXDSLValidator.h"
 #include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
