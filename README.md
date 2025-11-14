@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/badge/version-0.10.0-blue.svg)](https://github.com/yourusername/ainiagara)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.3+-orange.svg)](https://www.unrealengine.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-60%20passing-success.svg)](https://github.com/yourusername/ainiagara)
+[![Tests](https://img.shields.io/badge/tests-71%20passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](https://github.com/yourusername/ainiagara)
 [![Build](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
