@@ -3,19 +3,24 @@
 #include "UI/Widgets/SAINiagaraAPIKeyDialog.h"
 #include "Core/AINiagaraSettings.h"
 #include "Core/GeminiAPIClient.h"
-#include "Widgets/Layout/SVerticalBox.h"
-#include "Widgets/Layout/SHorizontalBox.h"
+#include "Core/VFXDSL.h"
+#include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Layout/SSeparator.h"
+#include "Widgets/Layout/SBorder.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/AppStyle.h"
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
+#include "Misc/DateTime.h"
 
 void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 {
+	OnAPIKeyConfigured = InArgs._OnAPIKeyConfigured;
+	
 	ChildSlot
 	[
 		SNew(SVerticalBox)
@@ -26,7 +31,7 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 		.Padding(10.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("APIKeyDialogTitle", "Configure Gemini API Key"))
+			.Text(NSLOCTEXT("AINiagara", "APIKeyDialogTitle", "Configure Gemini API Key"))
 			.TextStyle(FAppStyle::Get(), "LargeText")
 		]
 		
@@ -36,7 +41,7 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 		.Padding(10.0f, 0.0f, 10.0f, 10.0f)
 		[
 			SNew(STextBlock)
-			.Text(LOCTEXT("APIKeyDialogDescription", "Enter your Google Gemini API key to enable AI-powered VFX generation. Your API key will be stored securely in your project settings."))
+			.Text(NSLOCTEXT("AINiagara", "APIKeyDialogDescription", "Enter your Google Gemini API key to enable AI-powered VFX generation. Your API key will be stored securely in your project settings."))
 			.AutoWrapText(true)
 			.WrapTextAt(500.0f)
 		]
@@ -60,14 +65,14 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 			.Padding(0.0f, 0.0f, 0.0f, 5.0f)
 			[
 				SNew(STextBlock)
-				.Text(LOCTEXT("APIKeyLabel", "API Key:"))
+				.Text(NSLOCTEXT("AINiagara", "APIKeyLabel", "API Key:"))
 			]
 			
 			+ SVerticalBox::Slot()
 			.AutoHeight()
 			[
 				SAssignNew(APIKeyInputBox, SEditableTextBox)
-				.HintText(LOCTEXT("APIKeyHint", "Enter your Gemini API key"))
+				.HintText(NSLOCTEXT("AINiagara", "APIKeyHint", "Enter your Gemini API key"))
 				.IsPassword(true) // Mask the API key input
 				.MinDesiredWidth(400.0f)
 			]
@@ -103,7 +108,7 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 			.Padding(0.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SAssignNew(TestButton, SButton)
-				.Text(LOCTEXT("TestButton", "Test"))
+				.Text(NSLOCTEXT("AINiagara", "TestButton", "Test"))
 				.OnClicked(this, &SAINiagaraAPIKeyDialog::OnTestClicked)
 			]
 			
@@ -118,7 +123,7 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 			.Padding(5.0f, 0.0f, 5.0f, 0.0f)
 			[
 				SAssignNew(SaveButton, SButton)
-				.Text(LOCTEXT("SaveButton", "Save"))
+				.Text(NSLOCTEXT("AINiagara", "SaveButton", "Save"))
 				.OnClicked(this, &SAINiagaraAPIKeyDialog::OnSaveClicked)
 			]
 			
@@ -127,7 +132,7 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
 			[
 				SAssignNew(CancelButton, SButton)
-				.Text(LOCTEXT("CancelButton", "Cancel"))
+				.Text(NSLOCTEXT("AINiagara", "CancelButton", "Cancel"))
 				.OnClicked(this, &SAINiagaraAPIKeyDialog::OnCancelClicked)
 			]
 		]

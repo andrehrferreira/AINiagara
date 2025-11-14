@@ -6,6 +6,8 @@
 #include "Containers/Array.h"
 #include "Containers/Map.h"
 #include "UObject/ObjectMacros.h"
+#include "Interfaces/IHttpRequest.h"
+#include "GeminiAPIClient.generated.h"
 
 DECLARE_DELEGATE_OneParam(FOnGeminiResponse, const FString& ResponseText);
 DECLARE_DELEGATE_TwoParams(FOnGeminiError, int32 ErrorCode, const FString& ErrorMessage);

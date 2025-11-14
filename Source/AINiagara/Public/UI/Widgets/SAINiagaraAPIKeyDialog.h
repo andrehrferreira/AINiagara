@@ -18,13 +18,13 @@ class AINIAGARA_API SAINiagaraAPIKeyDialog : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS(SAINiagaraAPIKeyDialog)
 	{}
+		SLATE_EVENT(FSimpleDelegate, OnAPIKeyConfigured)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs);
 
 	/** Delegate for when API key is successfully configured */
-	DECLARE_DELEGATE(FOnAPIKeyConfigured);
-	FOnAPIKeyConfigured OnAPIKeyConfigured;
+	FSimpleDelegate OnAPIKeyConfigured;
 
 	/** Delegate for when dialog is cancelled */
 	DECLARE_DELEGATE(FOnDialogCancelled);

@@ -29,7 +29,6 @@ public:
 	 * @param AssetPath Path to the asset (Niagara/Cascade system)
 	 * @return Array of conversation messages
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|History")
 	TArray<FConversationMessage> GetHistory(const FString& AssetPath) const;
 
 	/**
@@ -94,7 +93,6 @@ public:
 
 private:
 	/** Map of asset paths to conversation histories */
-	UPROPERTY()
 	TMap<FString, TArray<FConversationMessage>> ConversationHistories;
 
 	/**

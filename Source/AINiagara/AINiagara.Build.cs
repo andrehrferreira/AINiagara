@@ -45,7 +45,7 @@ public class AINiagara : ModuleRules
 				"LevelEditor",
 				"InteractiveToolsFramework",
 				"EditorInteractiveToolsFramework",
-				"Http",
+				"HTTP",
 				"Json",
 				"JsonUtilities",
 				"Niagara",

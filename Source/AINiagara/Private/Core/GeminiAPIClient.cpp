@@ -13,7 +13,6 @@
 #include "Misc/App.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformFilemanager.h"
-#include "Misc/TickableObject.h"
 
 const FString FGeminiAPIClient::BaseURL = TEXT("https://generativelanguage.googleapis.com/v1beta");
 const FString FGeminiAPIClient::ChatCompletionEndpoint = TEXT("/models/gemini-pro:generateContent");

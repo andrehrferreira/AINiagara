@@ -38,7 +38,7 @@ void FAINiagaraChatWindow::OpenChatWindow()
 	const FVector2D WindowPosition = FSlateApplication::Get().GetCursorPos();
 
 	ChatWindow = SNew(SWindow)
-		.Title(LOCTEXT("AINiagaraChatWindowTitle", "AINiagara - AI Chat"))
+		.Title(NSLOCTEXT("AINiagara", "AINiagaraChatWindowTitle", "AINiagara - AI Chat"))
 		.ClientSize(WindowSize)
 		.ScreenPosition(WindowPosition)
 		.SizingRule(ESizingRule::UserSized)
@@ -59,7 +59,7 @@ void FAINiagaraChatWindow::ShowAPIKeyDialog()
 	const FVector2D DialogPosition = FSlateApplication::Get().GetCursorPos();
 
 	TSharedRef<SWindow> DialogWindow = SNew(SWindow)
-		.Title(LOCTEXT("APIKeyDialogWindowTitle", "AINiagara - API Key Configuration"))
+		.Title(NSLOCTEXT("AINiagara", "APIKeyDialogWindowTitle", "AINiagara - API Key Configuration"))
 		.ClientSize(DialogSize)
 		.ScreenPosition(DialogPosition)
 		.SizingRule(ESizingRule::FixedSize)

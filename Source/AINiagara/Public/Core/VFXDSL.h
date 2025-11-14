@@ -39,23 +39,6 @@ struct FVFXDSLEffect
 };
 
 /**
- * DSL Spawners structure
- */
-USTRUCT(BlueprintType)
-struct FVFXDSLSpawners
-{
-	GENERATED_BODY()
-
-	/** Burst spawn configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	struct FVFXDSLBurst Burst;
-
-	/** Rate spawn configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	struct FVFXDSLRate Rate;
-};
-
-/**
  * DSL Burst spawn configuration
  */
 USTRUCT(BlueprintType)
@@ -91,6 +74,23 @@ struct FVFXDSLRate
 	/** Scale factor over time */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ScaleOverTime = 1.0f;
+};
+
+/**
+ * DSL Spawners structure
+ */
+USTRUCT(BlueprintType)
+struct FVFXDSLSpawners
+{
+	GENERATED_BODY()
+
+	/** Burst spawn configuration */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVFXDSLBurst Burst;
+
+	/** Rate spawn configuration */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVFXDSLRate Rate;
 };
 
 /**

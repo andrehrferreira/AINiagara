@@ -29,7 +29,6 @@ public:
 	 * @param ConversationHistory Previous conversation messages
 	 * @return Complete user prompt string
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Prompt")
 	static FString BuildUserPrompt(
 		const FString& UserRequest,
 		const TArray<FConversationMessage>& ConversationHistory
@@ -39,7 +38,6 @@ public:
 	 * Get available tool functions for LLM
 	 * @return Array of tool function definitions
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Prompt")
 	static TArray<FVFXToolFunction> GetAvailableTools();
 
 	/**

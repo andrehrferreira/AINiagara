@@ -58,7 +58,7 @@ void FAINiagaraEditorToolbar::RegisterNiagaraToolbarButton()
 			UToolMenu* ToolbarMenu = ToolMenus->ExtendMenu(MenuName);
 			if (ToolbarMenu)
 			{
-				FToolMenuSection& Section = ToolbarMenu->AddSection("AINiagara", LOCTEXT("AINiagaraSection", "AINiagara"));
+				FToolMenuSection& Section = ToolbarMenu->AddSection("AINiagara", NSLOCTEXT("AINiagara", "AINiagaraSection", "AINiagara"));
 				
 				Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 					"OpenAIChat",
@@ -66,8 +66,8 @@ void FAINiagaraEditorToolbar::RegisterNiagaraToolbarButton()
 						FExecuteAction::CreateStatic(&FAINiagaraEditorToolbar::OnOpenAIChat),
 						FCanExecuteAction::CreateStatic(&FAINiagaraEditorToolbar::IsAPIKeyConfigured)
 					),
-					LOCTEXT("OpenAIChat", "AI Chat"),
-					LOCTEXT("OpenAIChatTooltip", "Open AI Chat interface for generating VFX"),
+					NSLOCTEXT("AINiagara", "OpenAIChat", "AI Chat"),
+					NSLOCTEXT("AINiagara", "OpenAIChatTooltip", "Open AI Chat interface for generating VFX"),
 					FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Message")
 				));
 				break; // Found and added, exit loop
@@ -107,7 +107,7 @@ void FAINiagaraEditorToolbar::RegisterCascadeToolbarButton()
 			UToolMenu* ToolbarMenu = ToolMenus->ExtendMenu(MenuName);
 			if (ToolbarMenu)
 			{
-				FToolMenuSection& Section = ToolbarMenu->AddSection("AINiagara", LOCTEXT("AINiagaraSection", "AINiagara"));
+				FToolMenuSection& Section = ToolbarMenu->AddSection("AINiagara", NSLOCTEXT("AINiagara", "AINiagaraSection", "AINiagara"));
 				
 				Section.AddEntry(FToolMenuEntry::InitToolBarButton(
 					"OpenAIChat",
@@ -115,8 +115,8 @@ void FAINiagaraEditorToolbar::RegisterCascadeToolbarButton()
 						FExecuteAction::CreateStatic(&FAINiagaraEditorToolbar::OnOpenAIChat),
 						FCanExecuteAction::CreateStatic(&FAINiagaraEditorToolbar::IsAPIKeyConfigured)
 					),
-					LOCTEXT("OpenAIChat", "AI Chat"),
-					LOCTEXT("OpenAIChatTooltip", "Open AI Chat interface for generating VFX"),
+					NSLOCTEXT("AINiagara", "OpenAIChat", "AI Chat"),
+					NSLOCTEXT("AINiagara", "OpenAIChatTooltip", "Open AI Chat interface for generating VFX"),
 					FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Message")
 				));
 				break; // Found and added, exit loop

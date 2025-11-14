@@ -75,6 +75,6 @@ FString UAINiagaraSettings::GetMaskedAPIKey() const
 void UAINiagaraSettings::SaveConfig()
 {
 	// Save to EditorPerProjectUserSettings config file
-	SaveConfig(CPF_Config, *ConfigFileName);
+	Super::SaveConfig(CPF_Config, *ConfigFileName);
 }
 

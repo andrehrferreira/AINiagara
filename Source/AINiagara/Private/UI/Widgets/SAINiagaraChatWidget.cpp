@@ -4,17 +4,15 @@
 #include "Core/GeminiAPIClient.h"
 #include "Core/ConversationHistoryManager.h"
 #include "Core/VFXDSLParser.h"
-#include "Core/VFXDSLValidator.h"
 #include "Core/VFXPromptBuilder.h"
 #include "Core/NiagaraSystemGenerator.h"
 #include "Core/VFXDSL.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "Widgets/Input/SEditableTextBox.h"
 #include "Widgets/Input/SButton.h"
-#include "Widgets/Layout/SVerticalBox.h"
-#include "Widgets/Layout/SHorizontalBox.h"
+#include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
-#include "Widgets/Progress/SProgressBar.h"
+#include "Widgets/Notifications/SProgressBar.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Styling/AppStyle.h"
@@ -65,7 +63,7 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 			[
 				SAssignNew(LoadingText, STextBlock)
 				.Visibility(EVisibility::Collapsed)
-				.Text(LOCTEXT("LoadingText", "Processing..."))
+				.Text(NSLOCTEXT("AINiagara", "LoadingText", "Processing..."))
 				.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f))
 			]
 		]
@@ -81,7 +79,7 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 			.FillWidth(1.0f)
 			[
 				SAssignNew(InputTextBox, SEditableTextBox)
-				.HintText(LOCTEXT("ChatInputHint", "Describe the VFX effect you want to create..."))
+				.HintText(NSLOCTEXT("AINiagara", "ChatInputHint", "Describe the VFX effect you want to create..."))
 				.OnTextCommitted(this, &SAINiagaraChatWidget::OnInputTextCommitted)
 			]
 			
@@ -90,7 +88,7 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
 			[
 				SAssignNew(SendButton, SButton)
-				.Text(LOCTEXT("SendButton", "Send"))
+				.Text(NSLOCTEXT("AINiagara", "SendButton", "Send"))
 				.OnClicked(this, &SAINiagaraChatWidget::OnSendClicked)
 			]
 		]
@@ -427,7 +425,7 @@ void SAINiagaraChatWidget::ClearInput()
 	if (InputTextBox.IsValid())
 	{
 		InputTextBox->SetText(FText::GetEmpty());
-		FSlateApplication::Get().SetKeyboardFocus(InputTextBox.ToSharedPtr());
+		FSlateApplication::Get().SetKeyboardFocus(InputTextBox.ToSharedRef());
 	}
 }
 
