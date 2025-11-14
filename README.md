@@ -13,17 +13,19 @@ AINiagara is an Unreal Engine 5 plugin that leverages Google's Gemini API to gen
 - 💬 **Chat interface** - Integrated into Niagara/Cascade editors
 - 📝 **DSL-based system** - JSON-based VFX specification language
 - 🔄 **System generation** - Automatic Niagara system creation from DSL
-- 💾 **Conversation history** - Per-asset conversation preservation
-- 🧪 **Comprehensive testing** - 48 unit tests with 95%+ coverage
+- 💾 **Conversation history** - Per-asset conversation preservation with automatic persistence
+- ⚙️ **Reverse engineering** - Export Niagara systems to DSL format
+- 🧪 **Comprehensive testing** - 60 unit/integration tests with 95%+ coverage
 - ✅ **UE 5.3 compatible** - Fully tested on Unreal Engine 5.3
 
 ### 🚧 In Progress / Planned
 - 🎨 Texture generation using Gemini Imagen 3 (Phase 10)
 - 🔄 Cascade system generation from DSL (Phase 9)
+- 🔄 Cascade system to DSL converter (Phase 14.2)
 - 🔧 Shader/Material generation (Phase 11)
 - 📦 3D Model integration (Phase 12)
 - 🔄 Cascade to Niagara conversion (Phase 13)
-- ⚙️ Reverse engineering (System → DSL export) (Phase 14)
+- 🔄 DSL modification workflow (export → modify → regenerate) (Phase 14.4)
 
 ## Quick Start
 
@@ -105,12 +107,23 @@ More examples:
 
 #### **History Management** (`Core/ConversationHistoryManager`)
 - Per-asset conversation persistence
-- Save/load on asset events
+- Automatic save on asset save events
+- Automatic load on asset open
 - Multi-asset history tracking
 - JSON-based storage format
+- Persistence across editor sessions
+- Enable/disable auto-persistence control
+
+#### **Reverse Engineering** (`Core/NiagaraSystemToDSLConverter`)
+- Niagara System → DSL conversion
+- Emitter-level conversion support
+- DSL export to JSON format
+- DSL export to file with save dialog
+- Multiple emitters support
+- Round-trip conversion testing
 
 #### **UI Components** (`UI/Widgets`)
-- `SAINiagaraChatWidget` - Main chat interface
+- `SAINiagaraChatWidget` - Main chat interface with DSL export
 - `SAINiagaraAPIKeyDialog` - API key configuration
 - `AINiagaraChatWindow` - Window management
 - `AINiagaraEditorToolbar` - Editor integration
@@ -124,10 +137,12 @@ The plugin includes comprehensive test coverage (95%+):
 - **VFXPromptBuilder**: 10 tests (prompt generation, all scenarios)
 - **NiagaraSystemGenerator**: 11 tests (system generation, all configurations)
 - **ConversationHistoryManager**: 7 tests (history persistence, multi-asset)
+- **ConversationHistoryPersistence**: 6 tests (auto-save, auto-load, session persistence)
 - **VFXDSLParser**: 8 tests (JSON parsing, serialization)
 - **VFXDSLValidator**: 3 tests (schema validation)
+- **NiagaraSystemToDSLConverter**: 6 tests (conversion, export, round-trip)
 
-**Total: 48 tests, all passing** ✅
+**Total: 60 tests, all passing** ✅
 
 Run tests:
 ```bash
@@ -162,7 +177,7 @@ cd scripts
 ### Code Coverage
 
 - **Target**: 95%+ test coverage
-- **Current**: 95%+ (48 unit/integration tests)
+- **Current**: 95%+ (60 unit/integration tests)
 - **Quality**: All tests passing, compiles with 0 warnings
 
 ## Project Structure
@@ -177,6 +192,7 @@ AINiagara/
 │   │   │   ├── VFXDSLParser.h
 │   │   │   ├── VFXPromptBuilder.h
 │   │   │   ├── NiagaraSystemGenerator.h
+│   │   │   ├── NiagaraSystemToDSLConverter.h
 │   │   │   ├── ConversationHistoryManager.h
 │   │   │   └── AINiagaraSettings.h
 │   │   └── UI/                 # User interface

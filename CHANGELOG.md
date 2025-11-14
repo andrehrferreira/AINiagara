@@ -10,10 +10,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 - Texture generation with Gemini Imagen 3 (Phase 10)
 - Cascade system generation from DSL (Phase 9)
+- Cascade system to DSL converter (Phase 14.2)
 - Shader/Material generation tool (Phase 11)
 - 3D Model integration (Phase 12)
 - Cascade to Niagara conversion (Phase 13)
-- Reverse engineering - System to DSL export (Phase 14)
+- DSL modification workflow (export → modify → regenerate) (Phase 14.4)
+
+## [0.10.0] - 2025-01-14
+
+### Added - History Management ✅
+- **Automatic History Persistence** - Phase 15 complete
+  - Auto-save on asset save events via package hooks
+  - Auto-load on asset open (ready for integration)
+  - Persistence across editor sessions
+  - Enable/disable auto-persistence control
+  - Independent tracking per asset
+  - Package event integration (`UPackage::PackageSavedWithContextEvent`)
+  - JSON file storage in `ProjectSaved/AINiagara/History/`
+
+### Added - Reverse Engineering ✅
+- **Niagara System to DSL Converter** - Phase 14.1, 14.3, 14.5
+  - `UNiagaraSystemToDSLConverter` class
+  - Convert Niagara systems to DSL format
+  - Convert individual emitters to DSL
+  - Export DSL to JSON with pretty printing
+  - Export DSL to file with save dialog
+  - Multiple emitters support
+  - Error handling for null systems/emitters
+
+### Added - UI Enhancements ✅
+- **Export DSL Button** - Integrated in chat widget
+  - One-click DSL export from current Niagara system
+  - File save dialog integration
+  - DSL preview in chat history
+  - Success/error notifications
+
+### Added - Testing ✅
+- **ConversationHistoryPersistence Tests** - 6 new tests
+  - Auto-persistence enable/disable
+  - Auto-save on message add
+  - Auto-save disabled behavior
+  - Session persistence (save/load)
+  - Independent tracking per asset
+  - File format validation
+
+- **NiagaraSystemToDSLConverter Tests** - 6 new tests
+  - Basic conversion test
+  - JSON export test
+  - File export test
+  - Multiple emitters test
+  - Error handling test
+  - Round-trip conversion test
+
+**Total: 60 tests (up from 48), all passing** ✅
+
+### Changed
+- **History Manager** - Enhanced with automatic persistence
+  - `RegisterAssetEventHooks()` - Automatic hook registration
+  - `SetAutoPersistence(bool)` - Control auto-save behavior
+  - `OnPackageSaved()` - Package save event handler
+  - Auto-save only when persistence is enabled
+
+### Technical Details
+- Uses `UPackage::PackageSavedWithContextEvent` delegate for asset save detection
+- Auto-detects `UNiagaraSystem` assets in packages
+- Safe filename conversion for asset paths
+- DesktopPlatform module integration for file dialogs
+- DSL extraction uses defaults (full parameter extraction requires Niagara Graph API)
 
 ## [0.9.0] - 2025-01-14
 
@@ -113,6 +176,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic documentation foundation
 - Project rulebook and task tracking
 
-[Unreleased]: https://github.com/yourusername/ainiagara/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/yourusername/ainiagara/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/yourusername/ainiagara/releases/tag/v0.10.0
 [0.9.0]: https://github.com/yourusername/ainiagara/releases/tag/v0.9.0
 [0.1.0]: https://github.com/yourusername/ainiagara/releases/tag/v0.1.0
