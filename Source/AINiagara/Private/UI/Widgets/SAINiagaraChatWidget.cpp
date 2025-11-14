@@ -705,3 +705,175 @@ FReply SAINiagaraChatWidget::OnExportDSLClicked()
 	return FReply::Handled();
 }
 
+FReply SAINiagaraChatWidget::OnImportDSLClicked()
+{
+	// Show open file dialog
+	IDesktopPlatform* DesktopPlatform = FDesktopPlatformModule::Get();
+	if (!DesktopPlatform)
+	{
+		ShowErrorNotification(TEXT("Desktop platform not available."));
+		return FReply::Handled();
+	}
+
+	TArray<FString> OutFilenames;
+	FString DefaultPath = FPaths::ProjectSavedDir() / TEXT("AINiagara") / TEXT("Exports");
+
+	if (DesktopPlatform->OpenFileDialog(
+		FSlateApplication::Get().FindBestParentWindowHandleForDialogs(nullptr),
+		NSLOCTEXT("AINiagara", "ImportDSLDialogTitle", "Import DSL").ToString(),
+		DefaultPath,
+		TEXT(""),
+		TEXT("JSON files (*.json)|*.json|All files (*.*)|*.*"),
+		EFileDialogFlags::None,
+		OutFilenames))
+	{
+		if (OutFilenames.Num() > 0)
+		{
+			FString FilePath = OutFilenames[0];
+			
+			// Read JSON file
+			FString JsonContent;
+			if (!FFileHelper::LoadFileToString(JsonContent, *FilePath))
+			{
+				ShowErrorNotification(TEXT("Failed to read DSL file."));
+				return FReply::Handled();
+			}
+
+			// Parse DSL
+			FVFXDSL ParsedDSL;
+			FString ParseError;
+			if (!UVFXDSLParser::ParseFromJSON(JsonContent, ParsedDSL, ParseError))
+			{
+				ShowErrorNotification(FString::Printf(TEXT("Failed to parse DSL: %s"), *ParseError));
+				return FReply::Handled();
+			}
+
+			// Validate DSL
+			FVFXDSLValidationResult ValidationResult = UVFXDSLValidator::Validate(ParsedDSL);
+			if (!ValidationResult.bIsValid)
+			{
+				FString ErrorMessage = TEXT("DSL validation failed:\n");
+				for (const FString& Error : ValidationResult.ErrorMessages)
+				{
+					ErrorMessage += Error + TEXT("\n");
+				}
+				ShowErrorNotification(ErrorMessage);
+				return FReply::Handled();
+			}
+
+			// Store loaded DSL
+			LoadedDSL = ParsedDSL;
+			bHasLoadedDSL = true;
+
+			// Show success message
+			FString SuccessMessage = FString::Printf(
+				TEXT("DSL imported successfully from:\n%s\n\nSystem type: %s\nEmitters: %d\n\nClick 'Regenerate' to create system from this DSL."),
+				*FilePath,
+				ParsedDSL.Effect.Type == EVFXEffectType::Niagara ? TEXT("Niagara") : TEXT("Cascade"),
+				ParsedDSL.Emitters.Num()
+			);
+			ShowSuccessNotification(SuccessMessage);
+
+			// Add DSL preview to chat
+			FString JsonOutput;
+			if (UNiagaraSystemToDSLConverter::ExportDSLToJSON(ParsedDSL, JsonOutput, true))
+			{
+				AddMessageToHistory(TEXT("system"), FString::Printf(TEXT("Loaded DSL:\n\n%s"), *JsonOutput), false, false);
+			}
+		}
+	}
+
+	return FReply::Handled();
+}
+
+FReply SAINiagaraChatWidget::OnRegenerateDSLClicked()
+{
+	if (!bHasLoadedDSL)
+	{
+		ShowErrorNotification(TEXT("No DSL loaded. Please import a DSL file first."));
+		return FReply::Handled();
+	}
+
+	// Determine package path
+	FString PackagePath = TEXT("/Game/VFX");
+	if (!CurrentAssetPath.IsEmpty())
+	{
+		int32 LastSlash = CurrentAssetPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+		if (LastSlash != INDEX_NONE)
+		{
+			PackagePath = CurrentAssetPath.Left(LastSlash);
+		}
+	}
+
+	// Generate system name from first emitter name or use default
+	FString SystemName = TEXT("AIRegeneratedSystem");
+	if (LoadedDSL.Emitters.Num() > 0 && !LoadedDSL.Emitters[0].Name.IsEmpty())
+	{
+		SystemName = LoadedDSL.Emitters[0].Name + TEXT("_System");
+	}
+
+	// Generate system based on type
+	if (LoadedDSL.Effect.Type == EVFXEffectType::Niagara)
+	{
+		ShowLoading(true, TEXT("Regenerating Niagara system from DSL..."));
+
+		UNiagaraSystem* GeneratedSystem = nullptr;
+		FString GenerationError;
+
+		if (UNiagaraSystemGenerator::CreateSystemFromDSL(LoadedDSL, PackagePath, SystemName, GeneratedSystem, GenerationError))
+		{
+			ShowLoading(false);
+			FString SuccessMessage = FString::Printf(
+				TEXT("Niagara system '%s' regenerated successfully at %s/%s!"),
+				*SystemName,
+				*PackagePath,
+				*SystemName
+			);
+			ShowSuccessNotification(SuccessMessage);
+		}
+		else
+		{
+			ShowLoading(false);
+			FString ErrorMessage = FString::Printf(
+				TEXT("Failed to regenerate Niagara system: %s"),
+				*GenerationError
+			);
+			ShowErrorNotification(ErrorMessage);
+		}
+	}
+	else if (LoadedDSL.Effect.Type == EVFXEffectType::Cascade)
+	{
+		ShowLoading(true, TEXT("Regenerating Cascade system from DSL..."));
+
+		UParticleSystem* GeneratedSystem = nullptr;
+		FString GenerationError;
+
+		if (UCascadeSystemGenerator::CreateSystemFromDSL(LoadedDSL, PackagePath, SystemName, GeneratedSystem, GenerationError))
+		{
+			ShowLoading(false);
+			FString SuccessMessage = FString::Printf(
+				TEXT("Cascade system '%s' regenerated successfully at %s/%s!"),
+				*SystemName,
+				*PackagePath,
+				*SystemName
+			);
+			ShowSuccessNotification(SuccessMessage);
+		}
+		else
+		{
+			ShowLoading(false);
+			FString ErrorMessage = FString::Printf(
+				TEXT("Failed to regenerate Cascade system: %s"),
+				*GenerationError
+			);
+			ShowErrorNotification(ErrorMessage);
+		}
+	}
+	else
+	{
+		ShowErrorNotification(TEXT("Invalid DSL type for regeneration."));
+	}
+
+	return FReply::Handled();
+}
+
