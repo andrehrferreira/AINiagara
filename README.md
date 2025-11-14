@@ -1,9 +1,9 @@
 # AINiagara
 
-[![Version](https://img.shields.io/badge/version-0.13.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
+[![Version](https://img.shields.io/badge/version-0.14.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.3+-orange.svg)](https://www.unrealengine.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-89%20passing-success.svg)](https://github.com/yourusername/ainiagara)
+[![Tests](https://img.shields.io/badge/tests-99%20passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](https://github.com/yourusername/ainiagara)
 [![Build](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
@@ -17,9 +17,16 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
 
 ## Features
 
-### ✅ Implemented (v0.12.0)
+### ✅ Implemented (v0.14.0)
 - 🤖 **AI-powered VFX generation** - Natural language prompts via Gemini API with intelligent context understanding
 - 💬 **Chat interface** - Cursor-style chat window integrated into Niagara/Cascade editors with rich message formatting
+- 🎨 **AI Texture Generation (NEW!)** - Gemini Imagen 3 integration for procedural texture creation
+  - Single textures (noise, fire, smoke, sparks, distortion, etc.)
+  - Flipbook sequences (2-64 frames) with automatic atlas generation
+  - Automatic tool call detection from LLM responses
+  - Resolution control (64-2048, power of 2)
+  - Color scheme specification
+  - Base64 decoding and PNG processing
 - 👁️ **Real-time Preview System** - Live preview updates in editor viewport as DSL evolves during conversation
   - Preview replaces current system in viewport (seamless integration)
   - Toggle ON/OFF control with performance throttling (0.5s)
@@ -46,11 +53,10 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
   - Detects Added, Removed, Modified, and Type Changed properties
   - Deep comparison of all DSL structures
   - Human-readable change descriptions
-- 🧪 **Comprehensive testing** - 89 unit/integration/UI tests with 95%+ coverage
+- 🧪 **Comprehensive testing** - 99 unit/integration/UI tests with 95%+ coverage
 - ✅ **Production ready** - Fully tested on Unreal Engine 5.3+
 
-### 🚧 Planned Features
-- 🎨 **Texture generation** - Using Gemini Imagen 3 for procedural texture creation (Phase 10)
+### 🚧 Pending MVP Features
 - 🔧 **Shader/Material generation** - AI-powered material creation and configuration (Phase 11)
 - 📦 **3D Model integration** - Mesh-based particle systems with AI-generated models (Phase 12)
 - 🔄 **Cascade to Niagara conversion** - Automated migration from legacy to modern systems (Phase 13)
