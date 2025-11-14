@@ -8,9 +8,13 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 #include "Misc/DateTime.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "UObject/Package.h"
+#include "NiagaraSystem.h"
 
 UConversationHistoryManager::UConversationHistoryManager(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, bAutoPersistenceEnabled(true)
 {
 }
 
@@ -22,6 +26,7 @@ UConversationHistoryManager* UConversationHistoryManager::Get()
 	{
 		Instance = NewObject<UConversationHistoryManager>();
 		Instance->AddToRoot(); // Prevent garbage collection
+		Instance->RegisterAssetEventHooks(); // Register hooks on creation
 	}
 	
 	return Instance;
@@ -49,8 +54,11 @@ void UConversationHistoryManager::AddMessage(const FString& AssetPath, const FSt
 	
 	History.Add(Message);
 	
-	// Auto-save after adding message
-	SaveHistory(AssetPath);
+	// Auto-save after adding message (if auto-persistence is enabled)
+	if (bAutoPersistenceEnabled)
+	{
+		SaveHistory(AssetPath);
+	}
 }
 
 void UConversationHistoryManager::ClearHistory(const FString& AssetPath)
@@ -226,5 +234,125 @@ FString UConversationHistoryManager::AssetPathToFilename(const FString& AssetPat
 	SafeFilename.ReplaceCharInline(TEXT('|'), TEXT('_'));
 	
 	return SafeFilename;
+}
+
+void UConversationHistoryManager::RegisterAssetEventHooks()
+{
+	if (!bAutoPersistenceEnabled)
+	{
+		return;
+	}
+
+	// Register for asset saved events
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+	
+	// Hook into package saved event
+	UPackage::PackageSavedWithContextEvent.AddUObject(this, &UConversationHistoryManager::OnPackageSaved);
+	
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: Registered asset event hooks for history persistence"));
+}
+
+void UConversationHistoryManager::UnregisterAssetEventHooks()
+{
+	// Unregister package saved event
+	UPackage::PackageSavedWithContextEvent.RemoveAll(this);
+	
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: Unregistered asset event hooks"));
+}
+
+void UConversationHistoryManager::SetAutoPersistence(bool bEnable)
+{
+	if (bAutoPersistenceEnabled == bEnable)
+	{
+		return;
+	}
+
+	bAutoPersistenceEnabled = bEnable;
+
+	if (bEnable)
+	{
+		RegisterAssetEventHooks();
+	}
+	else
+	{
+		UnregisterAssetEventHooks();
+	}
+}
+
+void UConversationHistoryManager::OnPackageSaved(const FString& PackageFilename, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
+{
+	if (!Package || !bAutoPersistenceEnabled)
+	{
+		return;
+	}
+
+	// Check if this package contains a Niagara system
+	TArray<UObject*> Objects;
+	GetObjectsWithOuter(Package, Objects, false);
+
+	for (UObject* Object : Objects)
+	{
+		if (UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(Object))
+		{
+			// Get asset path
+			FString AssetPath = NiagaraSystem->GetPathName();
+			
+			// Save history if it exists
+			if (HasHistory(AssetPath))
+			{
+				if (SaveHistory(AssetPath))
+				{
+					UE_LOG(LogTemp, Log, TEXT("AINiagara: Auto-saved conversation history for %s"), *AssetPath);
+				}
+			}
+		}
+	}
+}
+
+void UConversationHistoryManager::OnAssetSaved(const FString& PackageName, UObject* Asset)
+{
+	if (!Asset || !bAutoPersistenceEnabled)
+	{
+		return;
+	}
+
+	// Check if this is a Niagara system
+	if (UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(Asset))
+	{
+		FString AssetPath = Asset->GetPathName();
+		
+		// Save history if it exists
+		if (HasHistory(AssetPath))
+		{
+			if (SaveHistory(AssetPath))
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Auto-saved conversation history for %s"), *AssetPath);
+			}
+		}
+	}
+}
+
+void UConversationHistoryManager::OnAssetOpened(UObject* Asset)
+{
+	if (!Asset || !bAutoPersistenceEnabled)
+	{
+		return;
+	}
+
+	// Check if this is a Niagara system
+	if (UNiagaraSystem* NiagaraSystem = Cast<UNiagaraSystem>(Asset))
+	{
+		FString AssetPath = Asset->GetPathName();
+		
+		// Load history if it exists on disk but not in memory
+		if (!ConversationHistories.Contains(AssetPath) && FPaths::FileExists(GetHistoryFilePath(AssetPath)))
+		{
+			if (LoadHistory(AssetPath))
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Auto-loaded conversation history for %s"), *AssetPath);
+			}
+		}
+	}
 }
 

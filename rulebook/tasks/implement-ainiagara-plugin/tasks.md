@@ -106,11 +106,11 @@
 - [ ] 14.5 Add export options to chat interface
 
 ## 15. History Management Phase
-- [ ] 15.1 Design per-asset history storage structure
-- [ ] 15.2 Implement history save on asset save
-- [ ] 15.3 Implement history load on asset open
-- [ ] 15.4 Add history persistence across editor sessions
-- [ ] 15.5 Implement independent history tracking per asset
+- [x] 15.1 Design per-asset history storage structure
+- [x] 15.2 Implement history save on asset save
+- [x] 15.3 Implement history load on asset open
+- [x] 15.4 Add history persistence across editor sessions
+- [x] 15.5 Implement independent history tracking per asset
 
 ## 16. Testing Phase
 - [x] 16.1 Write unit tests for DSL parser (8 tests)

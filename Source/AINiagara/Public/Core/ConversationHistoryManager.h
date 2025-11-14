@@ -91,9 +91,54 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AINiagara|History")
 	bool HasHistory(const FString& AssetPath) const;
 
+	/**
+	 * Register asset event hooks for automatic history save/load
+	 */
+	void RegisterAssetEventHooks();
+
+	/**
+	 * Unregister asset event hooks
+	 */
+	void UnregisterAssetEventHooks();
+
+	/**
+	 * Enable or disable automatic history persistence
+	 * @param bEnable True to enable automatic save/load
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AINiagara|History")
+	void SetAutoPersistence(bool bEnable);
+
+	/**
+	 * Check if automatic persistence is enabled
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AINiagara|History")
+	bool IsAutoPersistenceEnabled() const { return bAutoPersistenceEnabled; }
+
 private:
 	/** Map of asset paths to conversation histories */
 	TMap<FString, TArray<FConversationMessage>> ConversationHistories;
+
+	/** Whether automatic persistence is enabled */
+	bool bAutoPersistenceEnabled = true;
+
+	/** Delegate handles for asset events */
+	FDelegateHandle OnAssetSavedHandle;
+	FDelegateHandle OnAssetOpenedHandle;
+
+	/**
+	 * Called when an asset is saved
+	 */
+	void OnAssetSaved(const FString& PackageName, UObject* Asset);
+
+	/**
+	 * Called when a package is saved (includes all assets in package)
+	 */
+	void OnPackageSaved(const FString& PackageFilename, UPackage* Package, FObjectPostSaveContext ObjectSaveContext);
+
+	/**
+	 * Called when an asset is opened in editor
+	 */
+	void OnAssetOpened(UObject* Asset);
 
 	/**
 	 * Get the file path for storing history
