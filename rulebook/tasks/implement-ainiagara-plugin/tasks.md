@@ -167,7 +167,10 @@
 - VFXDSLParser: 8 tests
 - VFXDSLValidator: 3 tests
 - NiagaraSystemToDSLConverter: 6 tests (NEW)
-- **Total: 60 tests, all passing** ✅
+- **CascadeSystemGenerator**: 9 tests (generation, multiple emitters, spawn, color, velocity, forces, blend mode, errors, round-trip)
+- **CascadeSystemToDSLConverter**: 2 tests (conversion, error handling)
+
+**Total: 71 tests, all passing** ✅
 
 ## 17. Documentation Phase
 - [x] 17.1 Update README.md with implementation details
