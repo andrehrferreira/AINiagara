@@ -7,6 +7,7 @@
 #include "Core/VFXPromptBuilder.h"
 #include "Core/NiagaraSystemGenerator.h"
 #include "Core/NiagaraSystemToDSLConverter.h"
+#include "Core/CascadeSystemGenerator.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -255,10 +256,52 @@ FReply SAINiagaraChatWidget::OnSendClicked()
 							ShowErrorNotification(ErrorMessage);
 						}
 					}
-					else
+					else if (DSL.Effect.Type == EVFXEffectType::Cascade)
 					{
-						// Cascade system generation (TODO: implement in Phase 9)
-						ShowSuccessNotification(TEXT("DSL validated successfully! Cascade system generation will be implemented soon."));
+						ShowLoading(true, TEXT("Generating Cascade system..."));
+						
+						// Determine package path
+						FString PackagePath = TEXT("/Game/VFX");
+						if (!CurrentAssetPath.IsEmpty())
+						{
+							// Extract package path from asset path
+							int32 LastSlash = CurrentAssetPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+							if (LastSlash != INDEX_NONE)
+							{
+								PackagePath = CurrentAssetPath.Left(LastSlash);
+							}
+						}
+						
+						// Generate system name from first emitter name or use default
+						FString SystemName = TEXT("AICascadeSystem");
+						if (DSL.Emitters.Num() > 0 && !DSL.Emitters[0].Name.IsEmpty())
+						{
+							SystemName = DSL.Emitters[0].Name + TEXT("_System");
+						}
+						
+						UParticleSystem* GeneratedSystem = nullptr;
+						FString GenerationError;
+						
+						if (UCascadeSystemGenerator::CreateSystemFromDSL(DSL, PackagePath, SystemName, GeneratedSystem, GenerationError))
+						{
+							ShowLoading(false);
+							FString SuccessMessage = FString::Printf(
+								TEXT("Cascade system '%s' generated successfully at %s/%s!"),
+								*SystemName,
+								*PackagePath,
+								*SystemName
+							);
+							ShowSuccessNotification(SuccessMessage);
+						}
+						else
+						{
+							ShowLoading(false);
+							FString ErrorMessage = FString::Printf(
+								TEXT("Failed to generate Cascade system: %s"),
+								*GenerationError
+							);
+							ShowErrorNotification(ErrorMessage);
+						}
 					}
 				}
 				else

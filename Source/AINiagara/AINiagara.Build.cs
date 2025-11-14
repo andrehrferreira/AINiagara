@@ -50,6 +50,7 @@ public class AINiagara : ModuleRules
 				"JsonUtilities",
 				"Niagara",
 				"NiagaraEditor",
+				"Engine",
 				"ToolMenus",
 				"WorkspaceMenuStructure",
 				"PropertyEditor",
