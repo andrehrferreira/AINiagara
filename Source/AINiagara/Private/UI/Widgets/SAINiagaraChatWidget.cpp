@@ -13,6 +13,7 @@
 #include "Core/PreviewSystemManager.h"
 #include "Core/VFXDSLDiff.h"
 #include "Tools/TextureGenerationHandler.h"
+#include "Tools/TextureMaterialHelper.h"
 #include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
@@ -1182,12 +1183,59 @@ void SAINiagaraChatWidget::ProcessTextureGenerationTool(TSharedPtr<FJsonObject> 
 				AddMessageToHistory(TEXT("system"), SuccessMessage, false, true);
 				ShowSuccessNotification(SuccessMessage);
 
-				// TODO: Apply texture to target emitter if specified (Phase 10.10)
+				// Try to apply texture to target emitter/system if specified
 				if (!Request.TargetEmitterName.IsEmpty())
 				{
+					// Try to get the current preview system
+					UObject* PreviewSystem = nullptr;
+					if (PreviewManager && PreviewManager->IsPreviewActive())
+					{
+						// Get preview system (Niagara or Cascade)
+						UNiagaraSystem* NiagaraPreview = PreviewManager->GetNiagaraPreview();
+						UParticleSystem* CascadePreview = PreviewManager->GetCascadePreview();
+
+						if (CascadePreview)
+						{
+							// Apply texture to Cascade system
+							FString ApplyError;
+							if (UTextureMaterialHelper::ApplyTextureToCascadeSystem(
+								CascadePreview,
+								Result.Texture,
+								Request.TargetEmitterName,
+								FName(TEXT("Texture")),
+								ApplyError))
+							{
+								AddMessageToHistory(TEXT("system"), 
+									FString::Printf(TEXT("✅ Applied texture to Cascade emitter '%s'"), *Request.TargetEmitterName),
+									false, true);
+							}
+							else
+							{
+								AddMessageToHistory(TEXT("system"), 
+									FString::Printf(TEXT("⚠️ Could not apply texture to emitter: %s"), *ApplyError),
+									false, false);
+							}
+						}
+						else if (NiagaraPreview)
+						{
+							// Niagara texture application not yet fully implemented
+							AddMessageToHistory(TEXT("system"), 
+								TEXT("⚠️ Niagara texture application not yet fully implemented. Apply texture manually in the emitter's render settings."),
+								false, false);
+						}
+					}
+					else
+					{
+						AddMessageToHistory(TEXT("system"), 
+							TEXT("⚠️ No active preview. Generate a VFX system first, then request texture generation with target emitter name."),
+							false, false);
+					}
+				}
+				else
+				{
+					// No target emitter specified
 					AddMessageToHistory(TEXT("system"), 
-						FString::Printf(TEXT("Note: Automatic texture application to emitter '%s' is not yet implemented."), 
-						*Request.TargetEmitterName), 
+						TEXT("💡 Tip: Specify a target emitter name in your request to automatically apply the texture."),
 						false, false);
 				}
 			}
