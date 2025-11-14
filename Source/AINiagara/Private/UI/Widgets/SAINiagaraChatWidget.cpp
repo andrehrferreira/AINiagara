@@ -102,8 +102,29 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 			[
 				SAssignNew(ExportDSLButton, SButton)
 				.Text(NSLOCTEXT("AINiagara", "ExportDSLButton", "Export DSL"))
-				.ToolTipText(NSLOCTEXT("AINiagara", "ExportDSLTooltip", "Export current Niagara system to DSL format"))
+				.ToolTipText(NSLOCTEXT("AINiagara", "ExportDSLTooltip", "Export current system to DSL format"))
 				.OnClicked(this, &SAINiagaraChatWidget::OnExportDSLClicked)
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(ImportDSLButton, SButton)
+				.Text(NSLOCTEXT("AINiagara", "ImportDSLButton", "Import DSL"))
+				.ToolTipText(NSLOCTEXT("AINiagara", "ImportDSLTooltip", "Import DSL from JSON file"))
+				.OnClicked(this, &SAINiagaraChatWidget::OnImportDSLClicked)
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(RegenerateDSLButton, SButton)
+				.Text(NSLOCTEXT("AINiagara", "RegenerateDSLButton", "Regenerate"))
+				.ToolTipText(NSLOCTEXT("AINiagara", "RegenerateDSLTooltip", "Regenerate system from loaded DSL"))
+				.OnClicked(this, &SAINiagaraChatWidget::OnRegenerateDSLClicked)
+				.IsEnabled(this, &SAINiagaraChatWidget::IsRegenerateEnabled)
 			]
 			
 			+ SHorizontalBox::Slot()

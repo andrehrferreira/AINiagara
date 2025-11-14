@@ -40,6 +40,12 @@ private:
 	/** Export DSL button */
 	TSharedPtr<SButton> ExportDSLButton;
 
+	/** Import DSL button */
+	TSharedPtr<SButton> ImportDSLButton;
+
+	/** Regenerate from DSL button */
+	TSharedPtr<SButton> RegenerateDSLButton;
+
 	/** Loading progress bar */
 	TSharedPtr<SProgressBar> LoadingBar;
 
@@ -58,6 +64,26 @@ private:
 	 * Handle export DSL button click
 	 */
 	FReply OnExportDSLClicked();
+
+	/**
+	 * Handle import DSL button click
+	 */
+	FReply OnImportDSLClicked();
+
+	/**
+	 * Handle regenerate from DSL button click
+	 */
+	FReply OnRegenerateDSLClicked();
+
+	/**
+	 * Current DSL loaded from file (for regeneration)
+	 */
+	FVFXDSL LoadedDSL;
+
+	/**
+	 * Whether a DSL is currently loaded
+	 */
+	bool bHasLoadedDSL = false;
 
 	/**
 	 * Handle enter key in input box
@@ -108,5 +134,10 @@ private:
 	 * Show error notification
 	 */
 	void ShowErrorNotification(const FString& Message);
+
+	/**
+	 * Check if regenerate button should be enabled
+	 */
+	bool IsRegenerateEnabled() const { return bHasLoadedDSL; }
 };
 
