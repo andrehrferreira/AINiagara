@@ -127,12 +127,12 @@
 - [x] 16.12 Verify test coverage ≥ 95% (48 tests, all passing)
 
 ## 17. Documentation Phase
-- [ ] 17.1 Update README.md with implementation details
-- [ ] 17.2 Update CHANGELOG.md with features added
+- [x] 17.1 Update README.md with implementation details
+- [x] 17.2 Update CHANGELOG.md with features added
 - [ ] 17.3 Create API documentation for public classes
 - [ ] 17.4 Add code comments for complex functions
 - [ ] 17.5 Create user guide in /docs
-- [ ] 17.6 Document DSL schema in /docs
+- [x] 17.6 Document DSL schema in /docs
 
 ## 18. Quality Assurance Phase
 - [x] 18.1 Run linter and fix all warnings
