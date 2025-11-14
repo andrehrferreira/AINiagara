@@ -13,6 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 3D Model integration (Phase 12)
 - Cascade to Niagara conversion (Phase 13)
 
+## [0.12.0] - 2025-01-14
+
+### Added - Real-time Preview System ✅
+- **Complete Real-time Preview System** - Phase 19 complete (12/12 tasks)
+  - `UPreviewSystemManager` singleton class for preview management
+  - Real-time preview updates in Niagara/Cascade editor viewport
+  - Preview replaces current system in viewport (não abre nova janela)
+  - Preview toggle button in chat interface (ON/OFF)
+  - Throttling (0.5s) para otimizar performance
+  - Error handling robusto com restauração de preview anterior
+  - DSL diff system (`UVFXDSLDiff`) para comparação de versões
+  - Exibição de mudanças detalhadas no chat
+  - Cleanup automático ao fechar chat
+  - 8 testes de integração para PreviewSystemManager
+  - Preview temporário (não persistido até save)
+  - Validação completa de DSL antes de atualizar preview
+
 ## [0.11.0] - 2025-01-14
 
 ### Added - DSL Modification Workflow ✅

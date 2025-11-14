@@ -6,6 +6,28 @@
 #include "Serialization/JsonWriter.h"
 #include "Misc/EnumRange.h"
 
+/**
+ * Parses a VFX DSL specification from a JSON string.
+ * 
+ * This function validates and parses the JSON structure into a FVFXDSL structure.
+ * The expected JSON format is:
+ * {
+ *   "effect": { "type": "Niagara|Cascade", "duration": number, "looping": boolean },
+ *   "emitters": [
+ *     { "name": "...", "spawners": {...}, "initialization": {...}, "update": {...}, "render": {...} },
+ *     ...
+ *   ]
+ * }
+ * 
+ * @param JsonString The JSON string to parse (typically from LLM response)
+ * @param OutDSL Output parameter - the parsed DSL structure
+ * @param OutError Output parameter - error message if parsing fails
+ * @return true if parsing was successful, false otherwise
+ * 
+ * @note Requires at least one emitter in the emitters array
+ * @note Validates JSON structure and required fields before parsing
+ * @note On failure, OutError contains a descriptive error message
+ */
 bool UVFXDSLParser::ParseFromJSON(const FString& JsonString, FVFXDSL& OutDSL, FString& OutError)
 {
 	TSharedPtr<FJsonObject> JsonObject;

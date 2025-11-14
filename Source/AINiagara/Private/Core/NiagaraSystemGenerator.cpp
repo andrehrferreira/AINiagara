@@ -18,6 +18,29 @@
 #include "UObject/UObjectGlobals.h"
 #include "UObject/Package.h"
 
+/**
+ * Creates a complete Niagara particle system from a DSL specification.
+ * 
+ * This function performs the following steps:
+ * 1. Validates the DSL (type must be Niagara, must have at least one emitter)
+ * 2. Creates a package for the system asset
+ * 3. Creates the UNiagaraSystem object
+ * 4. Creates and configures each emitter from the DSL
+ * 5. Adds emitters to the system
+ * 6. Marks the package as dirty and notifies the asset registry
+ * 
+ * @param DSL The VFX DSL specification containing effect and emitter definitions
+ * @param PackagePath The package path where to create the system (e.g., "/Game/VFX")
+ * @param SystemName The name for the system asset (will be used as asset name)
+ * @param OutSystem Output parameter - the created Niagara system (nullptr on failure)
+ * @param OutError Output parameter - error message if creation failed
+ * @return true if system was created successfully, false otherwise
+ * 
+ * @note The system is created with RF_Public | RF_Standalone flags
+ * @note Each emitter is created as a separate asset in the same package path
+ * @note On failure, OutError contains a descriptive error message
+ * @note The package is automatically marked as dirty and registered with the asset registry
+ */
 bool UNiagaraSystemGenerator::CreateSystemFromDSL(
 	const FVFXDSL& DSL,
 	const FString& PackagePath,

@@ -10,6 +10,8 @@
 #include "Core/CascadeSystemGenerator.h"
 #include "Core/CascadeSystemToDSLConverter.h"
 #include "Core/VFXDSLValidator.h"
+#include "Core/PreviewSystemManager.h"
+#include "Core/VFXDSLDiff.h"
 #include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
@@ -42,6 +44,9 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 	{
 		CurrentAssetPath = GetCurrentAssetPath();
 	}
+
+	// Initialize preview manager
+	PreviewManager = UPreviewSystemManager::Get();
 
 	ChildSlot
 	[
@@ -126,6 +131,16 @@ void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
 				.ToolTipText(NSLOCTEXT("AINiagara", "RegenerateDSLTooltip", "Regenerate system from loaded DSL"))
 				.OnClicked(this, &SAINiagaraChatWidget::OnRegenerateDSLClicked)
 				.IsEnabled(this, &SAINiagaraChatWidget::IsRegenerateEnabled)
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(PreviewToggleButton, SButton)
+				.Text(this, &SAINiagaraChatWidget::GetPreviewToggleText)
+				.ToolTipText(NSLOCTEXT("AINiagara", "PreviewToggleTooltip", "Toggle real-time preview"))
+				.OnClicked(this, &SAINiagaraChatWidget::OnPreviewToggleClicked)
 			]
 			
 			+ SHorizontalBox::Slot()
@@ -232,6 +247,9 @@ FReply SAINiagaraChatWidget::OnSendClicked()
 				
 				if (ValidationResult.bIsValid)
 				{
+					// Update preview if enabled (shows in editor viewport)
+					UpdatePreview(DSL);
+					
 					// Generate Niagara/Cascade system from DSL
 					if (DSL.Effect.Type == EVFXEffectType::Niagara)
 					{
@@ -876,5 +894,123 @@ FReply SAINiagaraChatWidget::OnRegenerateDSLClicked()
 	}
 
 	return FReply::Handled();
+}
+
+FReply SAINiagaraChatWidget::OnPreviewToggleClicked()
+{
+	if (PreviewManager)
+	{
+		bool bCurrentlyEnabled = PreviewManager->IsPreviewEnabled();
+		PreviewManager->SetPreviewEnabled(!bCurrentlyEnabled);
+		
+		if (!bCurrentlyEnabled)
+		{
+			ShowSuccessNotification(TEXT("Preview enabled - systems will update in real-time"));
+		}
+		else
+		{
+			ShowSuccessNotification(TEXT("Preview disabled"));
+		}
+	}
+	
+	return FReply::Handled();
+}
+
+void SAINiagaraChatWidget::UpdatePreview(const FVFXDSL& DSL)
+{
+	if (!PreviewManager)
+	{
+		return;
+	}
+	
+	if (!PreviewManager->IsPreviewEnabled())
+	{
+		return; // Preview disabled, skip update
+	}
+	
+	// Get diff before updating (only if there's a current preview)
+	FVFXDSLDiffResult Diff;
+	if (PreviewManager->IsPreviewActive())
+	{
+		Diff = PreviewManager->GetDSLDiff(DSL);
+	}
+	
+	FString PreviewError;
+	bool bSuccess = PreviewManager->UpdatePreview(DSL, false, &PreviewError);
+	
+	if (bSuccess)
+	{
+		// Preview updated successfully - show diff if there are changes
+		if (Diff.bHasChanges && Diff.Changes.Num() > 0)
+		{
+			FString DiffMessage = TEXT("Preview updated. Changes:\n");
+			int32 MaxChangesToShow = 5;
+			for (int32 i = 0; i < FMath::Min(Diff.Changes.Num(), MaxChangesToShow); i++)
+			{
+				DiffMessage += FString::Printf(TEXT("  • %s\n"), *Diff.Changes[i].Description);
+			}
+			if (Diff.Changes.Num() > MaxChangesToShow)
+			{
+				DiffMessage += FString::Printf(TEXT("  ... and %d more change(s)\n"), Diff.Changes.Num() - MaxChangesToShow);
+			}
+			AddMessageToHistory(TEXT("system"), DiffMessage, false, true);
+		}
+		else if (!PreviewManager->IsPreviewActive())
+		{
+			// First preview created
+			AddMessageToHistory(TEXT("system"), TEXT("Preview created successfully"), false, true);
+		}
+	}
+	else
+	{
+		// Preview update failed - show error but don't break the chat flow
+		// Only show error if it's a real error (not throttling, no change, or disabled)
+		if (!PreviewError.IsEmpty())
+		{
+			bool bShouldShowError = true;
+			
+			// Filter out expected/non-error cases
+			FString LowerError = PreviewError.ToLower();
+			if (LowerError.Contains(TEXT("throttled")) ||
+			    LowerError.Contains(TEXT("not changed")) ||
+			    LowerError.Contains(TEXT("disabled")) ||
+			    LowerError.Contains(TEXT("has not changed")))
+			{
+				bShouldShowError = false;
+			}
+			
+			if (bShouldShowError)
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("Preview update failed: %s (Previous preview maintained)"),
+					*PreviewError
+				);
+				ShowErrorNotification(ErrorMessage);
+			}
+		}
+		else
+		{
+			// No error message provided, but update failed
+			// This shouldn't happen, but handle gracefully
+			ShowErrorNotification(TEXT("Preview update failed (unknown error). Previous preview maintained."));
+		}
+	}
+}
+
+bool SAINiagaraChatWidget::IsPreviewEnabled() const
+{
+	return PreviewManager && PreviewManager->IsPreviewEnabled();
+}
+
+FText SAINiagaraChatWidget::GetPreviewToggleText() const
+{
+	if (IsPreviewEnabled())
+	{
+		return NSLOCTEXT("AINiagara", "PreviewToggleOn", "Preview: ON");
+	}
+	else
+	{
+		return NSLOCTEXT("AINiagara", "PreviewToggleOff", "Preview: OFF");
+	}
 }
 

@@ -99,6 +99,25 @@ void FGeminiAPIClient::TestAPIKey(
 	SetAPIKey(SavedAPIKey);
 }
 
+/**
+ * Sends a chat completion request to the Gemini API.
+ * 
+ * This function constructs an HTTP POST request to the Gemini API endpoint with:
+ * - The user's prompt
+ * - Full conversation history for context
+ * - Available tool functions for function calling
+ * 
+ * The request is asynchronous and uses delegates for success/error handling.
+ * 
+ * @param Prompt The user's current message/prompt
+ * @param ConversationHistory Array of previous conversation messages (user/assistant/system)
+ * @param AvailableTools Array of tool function definitions for function calling
+ * @param OnResponse Delegate called when API responds successfully with the generated text
+ * @param OnError Delegate called when API request fails (HTTP error code and message)
+ * 
+ * @note The API key must be set before calling this function (via SetAPIKey or LoadAPIKeyFromSettings)
+ * @note The request is sent asynchronously - delegates will be called on the game thread when complete
+ */
 void FGeminiAPIClient::SendChatCompletion(
 	const FString& Prompt,
 	const TArray<FConversationMessage>& ConversationHistory,
@@ -183,6 +202,29 @@ void FGeminiAPIClient::GenerateTexture(
 	Request->ProcessRequest();
 }
 
+/**
+ * Builds the JSON payload for a Gemini API chat completion request.
+ * 
+ * Constructs a JSON object following the Gemini API format:
+ * {
+ *   "contents": [
+ *     { "role": "user|assistant|system", "parts": [{ "text": "..." }] },
+ *     ...
+ *   ],
+ *   "tools": [
+ *     { "functionDeclarations": [{ "name": "...", "description": "...", "parameters": {...} }] },
+ *     ...
+ *   ]
+ * }
+ * 
+ * @param Prompt The current user prompt/message
+ * @param ConversationHistory Array of previous messages in the conversation
+ * @param AvailableTools Array of tool function definitions for function calling
+ * @return JSON string payload ready to send to the API
+ * 
+ * @note The conversation history is added first, followed by the current prompt
+ * @note Tools are only included if AvailableTools is not empty
+ */
 FString FGeminiAPIClient::BuildChatCompletionPayload(
 	const FString& Prompt,
 	const TArray<FConversationMessage>& ConversationHistory,

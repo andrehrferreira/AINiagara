@@ -60,6 +60,10 @@ Tests are located in `Source/AINiagara/Tests/` directory:
 - `VFXDSLParserTest.cpp` - Tests for DSL JSON parsing
 - `VFXDSLValidatorTest.cpp` - Tests for DSL validation
 - `ConversationHistoryManagerTest.cpp` - Tests for conversation history management
+- `SAINiagaraChatWidgetTest.cpp` - UI tests for chat interface
+- `SAINiagaraAPIKeyDialogTest.cpp` - UI tests for API configuration dialog
+
+See [FEATURES_VALIDATION.md](./FEATURES_VALIDATION.md) for complete scenario coverage mapping.
 
 ## Writing New Tests
 

@@ -12,6 +12,7 @@ class SButton;
 class SProgressBar;
 class STextBlock;
 class SBorder;
+class UPreviewSystemManager;
 
 /**
  * Chat widget for AI VFX generation
@@ -46,6 +47,9 @@ private:
 	/** Regenerate from DSL button */
 	TSharedPtr<SButton> RegenerateDSLButton;
 
+	/** Preview toggle button */
+	TSharedPtr<SButton> PreviewToggleButton;
+
 	/** Loading progress bar */
 	TSharedPtr<SProgressBar> LoadingBar;
 
@@ -74,6 +78,16 @@ private:
 	 * Handle regenerate from DSL button click
 	 */
 	FReply OnRegenerateDSLClicked();
+
+	/**
+	 * Handle preview toggle button click
+	 */
+	FReply OnPreviewToggleClicked();
+
+	/**
+	 * Update preview system from DSL
+	 */
+	void UpdatePreview(const FVFXDSL& DSL);
 
 	/**
 	 * Current DSL loaded from file (for regeneration)
@@ -139,5 +153,21 @@ private:
 	 * Check if regenerate button should be enabled
 	 */
 	bool IsRegenerateEnabled() const { return bHasLoadedDSL; }
+
+	/**
+	 * Check if preview is enabled
+	 */
+	bool IsPreviewEnabled() const;
+
+	/**
+	 * Get preview toggle button text
+	 */
+	FText GetPreviewToggleText() const;
+
+	/**
+	 * Preview system manager instance
+	 */
+	UPROPERTY()
+	UPreviewSystemManager* PreviewManager;
 };
 

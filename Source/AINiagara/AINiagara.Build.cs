@@ -59,7 +59,8 @@ public class AINiagara : ModuleRules
 				"EditorStyle",
 				"ContentBrowser",
 				"AutomationTest",
-				"UnrealEd"
+				"UnrealEd",
+				"EditorSubsystem"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

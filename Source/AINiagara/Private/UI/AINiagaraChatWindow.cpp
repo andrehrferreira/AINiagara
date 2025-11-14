@@ -4,6 +4,7 @@
 #include "UI/Widgets/SAINiagaraChatWidget.h"
 #include "UI/Widgets/SAINiagaraAPIKeyDialog.h"
 #include "Core/AINiagaraSettings.h"
+#include "Core/PreviewSystemManager.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Widgets/SWindow.h"
 #include "Framework/Docking/TabManager.h"
@@ -82,6 +83,12 @@ void FAINiagaraChatWindow::CloseChatWindow()
 {
 	if (ChatWindow.IsValid())
 	{
+		// Cleanup preview when closing chat window
+		if (UPreviewSystemManager* PreviewManager = UPreviewSystemManager::Get())
+		{
+			PreviewManager->Cleanup();
+		}
+		
 		ChatWindow->RequestDestroyWindow();
 		ChatWindow.Reset();
 	}

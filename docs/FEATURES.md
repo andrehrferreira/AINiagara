@@ -255,6 +255,31 @@ Given a DSL is exported from an existing system
 When the user modifies the effect through the AI chat
 Then the plugin MUST allow regenerating the system from the modified DSL
 
+### Requirement: Real-time Preview System
+The plugin MUST provide real-time preview of Niagara/Cascade systems in the editor viewport as the DSL is updated through the chat interface.
+
+#### Scenario: Preview updates on DSL change
+Given the preview is enabled in the chat interface
+When the AI generates or updates a DSL specification
+Then the preview system in the editor viewport MUST update automatically to reflect the new DSL
+
+#### Scenario: Preview toggle control
+Given the chat interface is open
+When the user toggles preview on/off
+Then the preview MUST be enabled or disabled accordingly
+And the preview system MUST be cleaned up when disabled
+
+#### Scenario: Preview system cleanup
+Given a preview system is active
+When the chat interface is closed or the user switches assets
+Then the preview system MUST be cleaned up and removed from memory
+
+#### Scenario: Preview performance
+Given rapid DSL updates occur
+When the preview system processes updates
+Then updates MUST be throttled/debounced to prevent editor lag
+And the preview MUST remain responsive
+
 ### Requirement: Chat History Management
 The plugin MUST preserve chat history individually for each Niagara/Cascade asset across editor sessions.
 

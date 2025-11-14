@@ -29,13 +29,11 @@ AINiagara is an Unreal Engine 5 plugin that leverages Google's Gemini API to gen
 - ✅ **UE 5.3 compatible** - Fully tested on Unreal Engine 5.3
 
 ### 🚧 In Progress / Planned
+- 👁️ **Real-time Preview System** (Phase 19) - Preview em tempo real do Niagara/Cascade conforme DSL é atualizado
 - 🎨 Texture generation using Gemini Imagen 3 (Phase 10)
-- 🔄 Cascade system generation from DSL (Phase 9)
-- 🔄 Cascade system to DSL converter (Phase 14.2)
 - 🔧 Shader/Material generation (Phase 11)
 - 📦 3D Model integration (Phase 12)
 - 🔄 Cascade to Niagara conversion (Phase 13)
-- 🔄 DSL modification workflow (export → modify → regenerate) (Phase 14.4)
 
 ## Quick Start
 
@@ -82,7 +80,10 @@ More examples:
 
 ## Documentation
 
+- [User Guide](docs/USER_GUIDE.md) - Step-by-step guide for using the plugin
+- [API Reference](docs/API_REFERENCE.md) - Complete API documentation for developers
 - [Features Specification](docs/FEATURES.md) - Complete feature documentation
+- [Features Validation](docs/FEATURES_VALIDATION.md) - Test coverage mapping for all scenarios
 - [Testing](docs/TESTING.md) - Test documentation and coverage reports
 - [DSL Schema](docs/DSL_SCHEMA.md) - DSL format specification
 - [Implementation Tasks](rulebook/tasks/implement-ainiagara-plugin/tasks.md) - Development progress tracker
@@ -155,8 +156,10 @@ The plugin includes comprehensive test coverage (95%+):
 - **NiagaraSystemToDSLConverter**: 6 tests (conversion, export, round-trip)
 - **CascadeSystemGenerator**: 9 tests (generation, multiple emitters, spawn, color, velocity, forces, blend mode, errors, round-trip)
 - **CascadeSystemToDSLConverter**: 2 tests (conversion, error handling)
+- **SAINiagaraChatWidget**: 4 tests (construction, empty asset path, history loading, multiple assets)
+- **SAINiagaraAPIKeyDialog**: 5 tests (construction, with existing key, without key, delegates, validation)
 
-**Total: 71 tests, all passing** ✅
+**Total: 81 tests, all passing** ✅
 
 Run tests:
 ```bash
@@ -191,7 +194,7 @@ cd scripts
 ### Code Coverage
 
 - **Target**: 95%+ test coverage
-- **Current**: 95%+ (71 unit/integration tests)
+- **Current**: 95%+ (81 unit/integration/UI tests)
 - **Quality**: All tests passing, compiles with 0 warnings
 
 ## Project Structure
