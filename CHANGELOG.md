@@ -9,12 +9,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 - Texture generation with Gemini Imagen 3 (Phase 10)
-- Cascade system generation from DSL (Phase 9)
-- Cascade system to DSL converter (Phase 14.2)
 - Shader/Material generation tool (Phase 11)
 - 3D Model integration (Phase 12)
 - Cascade to Niagara conversion (Phase 13)
 - DSL modification workflow (export → modify → regenerate) (Phase 14.4)
+
+## [0.11.0] - 2025-01-14
+
+### Added - Cascade System Generation ✅
+- **Cascade System Generator** - Phase 9 complete
+  - `UCascadeSystemGenerator` class
+  - Create Cascade particle systems from DSL
+  - Create Cascade emitters from DSL
+  - Configure spawn modules (rate, bursts)
+  - Configure initialization modules (size, color, velocity, rotation)
+  - Configure update modules (forces, gravity, wind)
+  - Configure render modules (material, blend mode)
+  - Full integration in chat widget
+
+### Added - Cascade Reverse Engineering ✅
+- **Cascade System to DSL Converter** - Phase 14.2 complete
+  - `UCascadeSystemToDSLConverter` class
+  - Convert Cascade systems to DSL format
+  - Convert Cascade emitters to DSL
+  - Extract spawner configuration from modules
+  - Extract initialization, update, and render configs
+  - Export support in chat widget (both Niagara and Cascade)
+
+### Added - Testing ✅
+- **Cascade Integration Tests** - Phase 16.6 complete
+  - CascadeSystemGenerator: 9 tests
+  - CascadeSystemToDSLConverter: 2 tests
+  - **Total: 71 tests (up from 60), all passing** ✅
+
+### Changed
+- **Chat Widget** - Enhanced export functionality
+  - Now supports both Niagara and Cascade system export
+  - Automatic system type detection
+  - Unified export workflow
+
+### Technical Details
+- Uses `UParticleSystem` and `UParticleEmitter` classes
+- Module configuration via `UParticleModuleRequired`, `UParticleModuleSpawn`, etc.
+- Supports spawn rate, bursts, size, color, velocity, rotation
+- Material and blend mode configuration
+- Full round-trip conversion support (DSL → System → DSL)
 
 ## [0.10.0] - 2025-01-14
 

@@ -21,10 +21,10 @@ AINiagara is an Unreal Engine 5 plugin that leverages Google's Gemini API to gen
 - 🤖 **AI-powered VFX generation** - Natural language prompts via Gemini API
 - 💬 **Chat interface** - Integrated into Niagara/Cascade editors
 - 📝 **DSL-based system** - JSON-based VFX specification language
-- 🔄 **System generation** - Automatic Niagara system creation from DSL
+- 🔄 **System generation** - Automatic Niagara and Cascade system creation from DSL
 - 💾 **Conversation history** - Per-asset conversation preservation with automatic persistence
-- ⚙️ **Reverse engineering** - Export Niagara systems to DSL format
-- 🧪 **Comprehensive testing** - 60 unit/integration tests with 95%+ coverage
+- ⚙️ **Reverse engineering** - Export Niagara and Cascade systems to DSL format
+- 🧪 **Comprehensive testing** - 71 unit/integration tests with 95%+ coverage
 - ✅ **UE 5.3 compatible** - Fully tested on Unreal Engine 5.3
 
 ### 🚧 In Progress / Planned
@@ -108,9 +108,10 @@ More examples:
 - DSL format documentation injection
 - Conversation history context integration
 
-#### **System Generation** (`Core/NiagaraSystemGenerator`)
+#### **System Generation** (`Core/NiagaraSystemGenerator`, `Core/CascadeSystemGenerator`)
 - UNiagaraSystem factory from DSL
-- UNiagaraEmitter creation and configuration
+- UParticleSystem factory from DSL
+- UNiagaraEmitter and UParticleEmitter creation and configuration
 - Module configuration (Spawn, Initialize, Update, Render)
 - Package and asset registry management
 
@@ -123,9 +124,10 @@ More examples:
 - Persistence across editor sessions
 - Enable/disable auto-persistence control
 
-#### **Reverse Engineering** (`Core/NiagaraSystemToDSLConverter`)
+#### **Reverse Engineering** (`Core/NiagaraSystemToDSLConverter`, `Core/CascadeSystemToDSLConverter`)
 - Niagara System → DSL conversion
-- Emitter-level conversion support
+- Cascade System → DSL conversion
+- Emitter-level conversion support for both systems
 - DSL export to JSON format
 - DSL export to file with save dialog
 - Multiple emitters support
@@ -150,8 +152,10 @@ The plugin includes comprehensive test coverage (95%+):
 - **VFXDSLParser**: 8 tests (JSON parsing, serialization)
 - **VFXDSLValidator**: 3 tests (schema validation)
 - **NiagaraSystemToDSLConverter**: 6 tests (conversion, export, round-trip)
+- **CascadeSystemGenerator**: 9 tests (generation, multiple emitters, spawn, color, velocity, forces, blend mode, errors, round-trip)
+- **CascadeSystemToDSLConverter**: 2 tests (conversion, error handling)
 
-**Total: 60 tests, all passing** ✅
+**Total: 71 tests, all passing** ✅
 
 Run tests:
 ```bash
@@ -186,7 +190,7 @@ cd scripts
 ### Code Coverage
 
 - **Target**: 95%+ test coverage
-- **Current**: 95%+ (60 unit/integration tests)
+- **Current**: 95%+ (71 unit/integration tests)
 - **Quality**: All tests passing, compiles with 0 warnings
 
 ## Project Structure
@@ -202,6 +206,8 @@ AINiagara/
 │   │   │   ├── VFXPromptBuilder.h
 │   │   │   ├── NiagaraSystemGenerator.h
 │   │   │   ├── NiagaraSystemToDSLConverter.h
+│   │   │   ├── CascadeSystemGenerator.h
+│   │   │   ├── CascadeSystemToDSLConverter.h
 │   │   │   ├── ConversationHistoryManager.h
 │   │   │   └── AINiagaraSettings.h
 │   │   └── UI/                 # User interface
