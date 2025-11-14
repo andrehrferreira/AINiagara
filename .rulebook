@@ -1,0 +1,40 @@
+{
+  "version": "1.0.0",
+  "installedAt": "2025-11-14T03:48:52.064Z",
+  "updatedAt": "2025-11-14T03:48:52.065Z",
+  "projectId": "3a139157-463c-4a50-86e8-cd60751b1566",
+  "mode": "full",
+  "features": {
+    "watcher": true,
+    "agent": true,
+    "logging": true,
+    "telemetry": true,
+    "notifications": false,
+    "dryRun": false,
+    "gitHooks": false,
+    "repl": false,
+    "templates": false,
+    "context": false,
+    "health": false,
+    "plugins": false,
+    "parallel": false,
+    "smartContinue": false
+  },
+  "coverageThreshold": 95,
+  "language": "en",
+  "outputLanguage": "en",
+  "cliTools": [],
+  "maxParallelTasks": 1,
+  "timeouts": {
+    "taskExecution": 300000,
+    "cliResponse": 60000,
+    "testRun": 120000
+  },
+  "languages": [
+    "cpp"
+  ],
+  "frameworks": [],
+  "modules": [],
+  "modular": true,
+  "rulebookDir": "rulebook"
+}

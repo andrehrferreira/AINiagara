@@ -1,0 +1,18 @@
+{
+	"RemapUnityFiles": 
+	{
+		"Module.AINiagara.cpp.obj": [
+			"AINiagara.init.gen.cpp.obj",
+			"AINiagaraEditorMode.gen.cpp.obj",
+			"AINiagaraInteractiveTool.gen.cpp.obj",
+			"AINiagaraSimpleTool.gen.cpp.obj",
+			"PerModuleInline.gen.cpp.obj",
+			"AINiagaraEditorMode.cpp.obj",
+			"AINiagaraEditorModeCommands.cpp.obj",
+			"AINiagaraEditorModeToolkit.cpp.obj",
+			"AINiagaraModule.cpp.obj",
+			"AINiagaraInteractiveTool.cpp.obj",
+			"AINiagaraSimpleTool.cpp.obj"
+		]
+	}
+}

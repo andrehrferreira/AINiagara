@@ -1,0 +1,503 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
+#include "UI/Widgets/SAINiagaraChatWidget.h"
+#include "Core/GeminiAPIClient.h"
+#include "Core/ConversationHistoryManager.h"
+#include "Core/VFXDSLParser.h"
+#include "Core/VFXDSLValidator.h"
+#include "Core/VFXPromptBuilder.h"
+#include "Core/NiagaraSystemGenerator.h"
+#include "Core/VFXDSL.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "Widgets/Input/SEditableTextBox.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Layout/SVerticalBox.h"
+#include "Widgets/Layout/SHorizontalBox.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Widgets/Progress/SProgressBar.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Styling/AppStyle.h"
+#include "Internationalization/Internationalization.h"
+#include "Internationalization/Text.h"
+#include "Misc/DateTime.h"
+
+void SAINiagaraChatWidget::Construct(const FArguments& InArgs)
+{
+	// Set asset path from arguments or try to get from editor
+	CurrentAssetPath = InArgs._AssetPath;
+	if (CurrentAssetPath.IsEmpty())
+	{
+		CurrentAssetPath = GetCurrentAssetPath();
+	}
+
+	ChildSlot
+	[
+		SNew(SVerticalBox)
+		
+		// Message history area
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.Padding(5.0f)
+		[
+			SAssignNew(MessageHistoryBox, SScrollBox)
+			.Orientation(Orient_Vertical)
+		]
+		
+		// Loading indicator area
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(5.0f)
+		[
+			SNew(SVerticalBox)
+			
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SAssignNew(LoadingBar, SProgressBar)
+				.Visibility(EVisibility::Collapsed)
+				.Percent(1.0f)
+			]
+			
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(2.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(LoadingText, STextBlock)
+				.Visibility(EVisibility::Collapsed)
+				.Text(LOCTEXT("LoadingText", "Processing..."))
+				.ColorAndOpacity(FLinearColor(0.7f, 0.7f, 0.7f))
+			]
+		]
+		
+		// Input area
+		+ SVerticalBox::Slot()
+		.AutoHeight()
+		.Padding(5.0f)
+		[
+			SNew(SHorizontalBox)
+			
+			+ SHorizontalBox::Slot()
+			.FillWidth(1.0f)
+			[
+				SAssignNew(InputTextBox, SEditableTextBox)
+				.HintText(LOCTEXT("ChatInputHint", "Describe the VFX effect you want to create..."))
+				.OnTextCommitted(this, &SAINiagaraChatWidget::OnInputTextCommitted)
+			]
+			
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			.Padding(5.0f, 0.0f, 0.0f, 0.0f)
+			[
+				SAssignNew(SendButton, SButton)
+				.Text(LOCTEXT("SendButton", "Send"))
+				.OnClicked(this, &SAINiagaraChatWidget::OnSendClicked)
+			]
+		]
+	];
+
+	// Load conversation history for current asset
+	LoadConversationHistory();
+}
+
+FReply SAINiagaraChatWidget::OnSendClicked()
+{
+	if (!InputTextBox.IsValid())
+	{
+		return FReply::Handled();
+	}
+
+	FText InputText = InputTextBox->GetText();
+	if (InputText.IsEmpty())
+	{
+		return FReply::Handled();
+	}
+
+	FString UserMessage = InputText.ToString();
+	
+	// Add user message to history
+	AddMessageToHistory(TEXT("user"), UserMessage);
+	
+	// Save to conversation history
+	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+	{
+		HistoryManager->AddMessage(CurrentAssetPath, TEXT("user"), UserMessage);
+	}
+
+	// Clear input
+	ClearInput();
+	
+	// Show loading
+	ShowLoading(true, TEXT("Preparing request..."));
+	
+	// Get conversation history
+	TArray<FConversationMessage> ConversationHistory;
+	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+	{
+		ConversationHistory = HistoryManager->GetHistory(CurrentAssetPath);
+	}
+
+	// Create API client
+	FGeminiAPIClient APIClient;
+	
+	// Build available tools
+	TArray<FVFXToolFunction> AvailableTools = UVFXPromptBuilder::GetAvailableTools();
+	
+	// Add system prompt as first message if conversation is empty
+	TArray<FConversationMessage> MessagesWithSystemPrompt = ConversationHistory;
+	if (MessagesWithSystemPrompt.Num() == 0)
+	{
+		FConversationMessage SystemMessage;
+		SystemMessage.Role = TEXT("system");
+		SystemMessage.Content = UVFXPromptBuilder::BuildSystemPrompt();
+		MessagesWithSystemPrompt.Insert(SystemMessage, 0);
+	}
+	
+	// Show loading with message
+	ShowLoading(true, TEXT("Sending request to AI..."));
+
+	// Send request to Gemini API
+	APIClient.SendChatCompletion(
+		UserMessage,
+		MessagesWithSystemPrompt,
+		AvailableTools,
+		FOnGeminiResponse::CreateLambda([this](const FString& ResponseText)
+		{
+			// Hide loading
+			ShowLoading(false);
+			
+			// Add assistant response to history
+			AddMessageToHistory(TEXT("assistant"), ResponseText);
+			
+			// Save to conversation history
+			if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+			{
+				HistoryManager->AddMessage(CurrentAssetPath, TEXT("assistant"), ResponseText);
+			}
+			
+			// Try to parse DSL from response
+			FVFXDSL DSL;
+			FString ParseError;
+			if (UVFXDSLParser::ParseFromJSON(ResponseText, DSL, ParseError))
+			{
+				ShowLoading(true, TEXT("Validating DSL..."));
+				
+				// Validate DSL
+				FVFXDSLValidationResult ValidationResult = UVFXDSLValidator::Validate(DSL);
+				
+				ShowLoading(false);
+				
+				if (ValidationResult.bIsValid)
+				{
+					// Generate Niagara/Cascade system from DSL
+					if (DSL.Effect.Type == EVFXEffectType::Niagara)
+					{
+						ShowLoading(true, TEXT("Generating Niagara system..."));
+						
+						// Determine package path
+						FString PackagePath = TEXT("/Game/VFX");
+						if (!CurrentAssetPath.IsEmpty())
+						{
+							// Extract package path from asset path
+							int32 LastSlash = CurrentAssetPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+							if (LastSlash != INDEX_NONE)
+							{
+								PackagePath = CurrentAssetPath.Left(LastSlash);
+							}
+						}
+						
+						// Generate system name from first emitter name or use default
+						FString SystemName = TEXT("AINiagaraSystem");
+						if (DSL.Emitters.Num() > 0 && !DSL.Emitters[0].Name.IsEmpty())
+						{
+							SystemName = DSL.Emitters[0].Name + TEXT("_System");
+						}
+						
+						UNiagaraSystem* GeneratedSystem = nullptr;
+						FString GenerationError;
+						
+						if (UNiagaraSystemGenerator::CreateSystemFromDSL(DSL, PackagePath, SystemName, GeneratedSystem, GenerationError))
+						{
+							ShowLoading(false);
+							FString SuccessMessage = FString::Printf(
+								TEXT("Niagara system '%s' generated successfully at %s/%s!"),
+								*SystemName,
+								*PackagePath,
+								*SystemName
+							);
+							ShowSuccessNotification(SuccessMessage);
+						}
+						else
+						{
+							ShowLoading(false);
+							FString ErrorMessage = FString::Printf(
+								TEXT("Failed to generate Niagara system: %s"),
+								*GenerationError
+							);
+							ShowErrorNotification(ErrorMessage);
+						}
+					}
+					else
+					{
+						// Cascade system generation (TODO: implement in Phase 9)
+						ShowSuccessNotification(TEXT("DSL validated successfully! Cascade system generation will be implemented soon."));
+					}
+				}
+				else
+				{
+					// Show validation errors
+					FString ErrorMessage = TEXT("DSL validation failed:\n");
+					for (const FString& Error : ValidationResult.ErrorMessages)
+					{
+						ErrorMessage += Error + TEXT("\n");
+					}
+					ShowErrorNotification(ErrorMessage);
+				}
+			}
+			else
+			{
+				// Response is not DSL, just show it
+				// This might be a tool call or other response
+			}
+		}),
+		FOnGeminiError::CreateLambda([this](int32 ErrorCode, const FString& ErrorMessage)
+		{
+			// Hide loading
+			ShowLoading(false);
+			
+			// Show error message
+			FString FullErrorMessage = FString::Printf(TEXT("API Error (%d): %s"), ErrorCode, *ErrorMessage);
+			ShowErrorNotification(FullErrorMessage);
+		})
+	);
+
+	return FReply::Handled();
+}
+
+void SAINiagaraChatWidget::OnInputTextCommitted(const FText& Text, ETextCommit::Type CommitType)
+{
+	if (CommitType == ETextCommit::OnEnter)
+	{
+		OnSendClicked();
+	}
+}
+
+void SAINiagaraChatWidget::AddMessageToHistory(const FString& Role, const FString& Content, bool bIsError, bool bIsSuccess)
+{
+	if (!MessageHistoryBox.IsValid())
+	{
+		return;
+	}
+
+	// Create formatted message widget
+	TSharedRef<SWidget> MessageWidget = CreateMessageWidget(Role, Content, bIsError, bIsSuccess);
+
+	// Add to scroll box
+	MessageHistoryBox->AddSlot()
+		.Padding(5.0f)
+		[
+			MessageWidget
+		];
+
+	// Scroll to bottom
+	MessageHistoryBox->ScrollToEnd();
+}
+
+TSharedRef<SWidget> SAINiagaraChatWidget::CreateMessageWidget(const FString& Role, const FString& Content, bool bIsError, bool bIsSuccess)
+{
+	// Determine colors and styling based on role and status
+	FLinearColor BackgroundColor;
+	FLinearColor TextColor;
+	FString RoleLabel;
+	float BorderThickness = 1.0f;
+
+	if (bIsError)
+	{
+		BackgroundColor = FLinearColor(0.3f, 0.1f, 0.1f, 0.3f);
+		TextColor = FLinearColor(1.0f, 0.5f, 0.5f);
+		RoleLabel = TEXT("ERROR");
+		BorderThickness = 2.0f;
+	}
+	else if (bIsSuccess)
+	{
+		BackgroundColor = FLinearColor(0.1f, 0.3f, 0.1f, 0.3f);
+		TextColor = FLinearColor(0.5f, 1.0f, 0.5f);
+		RoleLabel = TEXT("SUCCESS");
+		BorderThickness = 2.0f;
+	}
+	else if (Role == TEXT("user"))
+	{
+		BackgroundColor = FLinearColor(0.15f, 0.15f, 0.25f, 0.5f);
+		TextColor = FLinearColor(0.9f, 0.9f, 1.0f);
+		RoleLabel = TEXT("You");
+	}
+	else if (Role == TEXT("assistant"))
+	{
+		BackgroundColor = FLinearColor(0.1f, 0.15f, 0.2f, 0.5f);
+		TextColor = FLinearColor(0.7f, 0.9f, 1.0f);
+		RoleLabel = TEXT("AI");
+	}
+	else // system
+	{
+		BackgroundColor = FLinearColor(0.2f, 0.2f, 0.1f, 0.3f);
+		TextColor = FLinearColor(1.0f, 1.0f, 0.7f);
+		RoleLabel = TEXT("System");
+	}
+
+	// Format timestamp
+	FString Timestamp = FDateTime::Now().ToString(TEXT("%H:%M:%S"));
+
+	// Create message widget with border and padding
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+		.BorderBackgroundColor(BackgroundColor)
+		.Padding(8.0f)
+		[
+			SNew(SVerticalBox)
+			
+			// Role label and timestamp
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.Padding(0.0f, 0.0f, 0.0f, 4.0f)
+			[
+				SNew(SHorizontalBox)
+				
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(RoleLabel))
+					.TextStyle(FAppStyle::Get(), "BoldFont")
+					.ColorAndOpacity(TextColor)
+				]
+				
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				.HAlign(HAlign_Right)
+				[
+					SNew(STextBlock)
+					.Text(FText::FromString(Timestamp))
+					.ColorAndOpacity(FLinearColor(0.6f, 0.6f, 0.6f))
+					.TextStyle(FAppStyle::Get(), "SmallFont")
+				]
+			]
+			
+			// Message content
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			[
+				SNew(STextBlock)
+				.Text(FText::FromString(Content))
+				.AutoWrapText(true)
+				.WrapTextAt(550.0f)
+				.ColorAndOpacity(TextColor)
+			]
+		];
+}
+
+void SAINiagaraChatWidget::ShowLoading(bool bShow, const FString& LoadingMessage)
+{
+	if (LoadingBar.IsValid())
+	{
+		LoadingBar->SetVisibility(bShow ? EVisibility::Visible : EVisibility::Collapsed);
+	}
+
+	if (LoadingText.IsValid())
+	{
+		LoadingText->SetVisibility(bShow ? EVisibility::Visible : EVisibility::Collapsed);
+		if (!LoadingMessage.IsEmpty())
+		{
+			LoadingText->SetText(FText::FromString(LoadingMessage));
+		}
+	}
+
+	if (SendButton.IsValid())
+	{
+		SendButton->SetEnabled(!bShow);
+	}
+
+	if (InputTextBox.IsValid())
+	{
+		InputTextBox->SetEnabled(!bShow);
+	}
+}
+
+void SAINiagaraChatWidget::ClearInput()
+{
+	if (InputTextBox.IsValid())
+	{
+		InputTextBox->SetText(FText::GetEmpty());
+		FSlateApplication::Get().SetKeyboardFocus(InputTextBox.ToSharedPtr());
+	}
+}
+
+void SAINiagaraChatWidget::LoadConversationHistory()
+{
+	if (CurrentAssetPath.IsEmpty())
+	{
+		return;
+	}
+
+	// Try to load history from disk
+	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+	{
+		if (HistoryManager->LoadHistory(CurrentAssetPath))
+		{
+			// Get loaded history
+			TArray<FConversationMessage> History = HistoryManager->GetHistory(CurrentAssetPath);
+			
+			// Display all messages except system messages (they're added automatically)
+			for (const FConversationMessage& Message : History)
+			{
+				if (Message.Role != TEXT("system"))
+				{
+					AddMessageToHistory(Message.Role, Message.Content);
+				}
+			}
+		}
+	}
+}
+
+FString SAINiagaraChatWidget::GetCurrentAssetPath() const
+{
+	// Try to get asset path from active editor
+	// This is a simplified version - in a real implementation, you'd need to
+	// check which editor is active (Niagara or Cascade) and get the asset path
+	// For now, we'll use a default path that can be set via the widget arguments
+	
+	// TODO: Implement proper asset path detection from active editor
+	// This would require accessing the Niagara or Cascade editor toolkit
+	// and getting the currently edited asset path
+	
+	return FString();
+}
+
+void SAINiagaraChatWidget::RequestDSLCorrection(const FString& InvalidDSL, const FVFXDSLValidationResult& ValidationResult)
+{
+	// TODO: Implement DSL correction request to LLM
+	// This would send the invalid DSL and validation errors back to the LLM
+	// asking for corrections
+}
+
+void SAINiagaraChatWidget::ShowSuccessNotification(const FString& Message)
+{
+	AddMessageToHistory(TEXT("system"), Message, false, true);
+	
+	// Save to conversation history
+	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+	{
+		HistoryManager->AddMessage(CurrentAssetPath, TEXT("system"), Message);
+	}
+}
+
+void SAINiagaraChatWidget::ShowErrorNotification(const FString& Message)
+{
+	AddMessageToHistory(TEXT("system"), Message, true, false);
+	
+	// Save to conversation history
+	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
+	{
+		HistoryManager->AddMessage(CurrentAssetPath, TEXT("system"), Message);
+	}
+}
+
