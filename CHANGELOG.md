@@ -7,25 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned (Post-MVP Enhancements)
-- Phase 20: Advanced Niagara/Cascade Features
-- Phase 21: Niagara Fluids Support
-- Phase 22: VFX Production Pipeline (Lights, Audio, Camera FX)
+### In Progress - MVP Completion (78% complete)
+**Remaining MVP phases (10-13):**
 - Phase 10: Texture generation with Gemini Imagen 3
 - Phase 11: Shader/Material generation tool
 - Phase 12: 3D Model integration
 - Phase 13: Cascade to Niagara conversion
 
-## [1.0.0-MVP] - 2025-01-14
+### Planned (Post-MVP Enhancements)
+- Phase 20: Advanced Niagara/Cascade Features
+- Phase 21: Niagara Fluids Support (UE5+)
+- Phase 22: VFX Production Pipeline (Lights, Audio, Camera FX)
 
-### 🎉 MVP Complete - Production Ready
+## [0.13.0-beta] - 2025-01-14
 
-**The AINiagara plugin MVP is complete and ready for production use!**
+### Core Features Complete (18/23 phases)
 
-#### Summary
-Complete AI-powered VFX generation system with natural language interface, real-time preview, reverse engineering, and comprehensive testing. All core features implemented and validated.
+**Status**: Core functionality operational with real-time preview, reverse engineering, and comprehensive testing. Texture/Shader/Model/Conversion phases pending for MVP completion.
 
-#### Core Features (100% Complete)
+#### Implemented Features
 - ✅ **AI-Powered Generation**: Natural language → Niagara/Cascade systems
 - ✅ **Real-time Preview**: Live updates as DSL evolves in conversation
 - ✅ **Dual System Support**: Both Niagara and Cascade generation
@@ -35,12 +35,12 @@ Complete AI-powered VFX generation system with natural language interface, real-
 - ✅ **Comprehensive Testing**: 89 tests with 95%+ coverage
 - ✅ **Complete Documentation**: API docs, user guide, features validation
 
-#### Technical Achievements
-- **89 passing tests** across all systems
+#### Technical Status
+- **89 passing tests** across all implemented systems
 - **95%+ code coverage** validated
 - **Zero memory leaks** in preview system
 - **UE 5.3+ compatible** and tested
-- **Production-ready** performance
+- **Stable and functional** for current feature set
 
 ## [0.12.0] - 2025-01-14
 
