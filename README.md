@@ -1,6 +1,6 @@
 # AINiagara
 
-[![Version](https://img.shields.io/badge/version-0.14.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
+[![Version](https://img.shields.io/badge/version-0.15.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.3+-orange.svg)](https://www.unrealengine.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-99%20passing-success.svg)](https://github.com/yourusername/ainiagara)
@@ -17,16 +17,20 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
 
 ## Features
 
-### ✅ Implemented (v0.14.0)
+### ✅ Implemented (v0.15.0)
 - 🤖 **AI-powered VFX generation** - Natural language prompts via Gemini API with intelligent context understanding
 - 💬 **Chat interface** - Cursor-style chat window integrated into Niagara/Cascade editors with rich message formatting
-- 🎨 **AI Texture Generation (NEW!)** - Gemini Imagen 3 integration for procedural texture creation
+- 🎨 **AI Texture Generation (COMPLETE!)** - Full Gemini Imagen 3 integration for procedural texture creation
   - Single textures (noise, fire, smoke, sparks, distortion, etc.)
   - Flipbook sequences (2-64 frames) with automatic atlas generation
   - Automatic tool call detection from LLM responses
   - Resolution control (64-2048, power of 2)
   - Color scheme specification
   - Base64 decoding and PNG processing
+  - **Automatic material application to Cascade emitters**
+  - **Dynamic material instance creation**
+  - **Multi-parameter texture assignment**
+  - **Preview system integration**
 - 👁️ **Real-time Preview System** - Live preview updates in editor viewport as DSL evolves during conversation
   - Preview replaces current system in viewport (seamless integration)
   - Toggle ON/OFF control with performance throttling (0.5s)
