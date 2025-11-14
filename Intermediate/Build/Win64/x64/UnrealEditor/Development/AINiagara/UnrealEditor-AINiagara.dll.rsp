@@ -1,4 +1,5 @@
-/MANIFEST:NO
+/MANIFEST:EMBED
+/MANIFESTINPUT:"..\Build\Windows\Resources\Default-Win64.manifest"
 /NOLOGO
 /DEBUG:FULL
 /errorReport:prompt
@@ -10,7 +11,6 @@
 /DELAY:UNLOAD
 /DLL
 /PDBALTPATH:%_PDB%
-/d2:-ExtendedWarningInfo
 /OPT:NOREF
 /OPT:NOICF
 /INCREMENTAL:NO
@@ -20,9 +20,9 @@
 /ALTERNATENAME:__imp___std_init_once_complete=__imp_InitOnceComplete
 /DELAYLOAD:"d3d12.dll"
 /DELAYLOAD:"DBGHELP.DLL"
-/LIBPATH:"C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.38.33130/lib/x64"
-/LIBPATH:"C:/Program Files (x86)/Windows Kits/10/lib/10.0.22621.0/ucrt/x64"
-/LIBPATH:"C:/Program Files (x86)/Windows Kits/10/lib/10.0.22621.0/um/x64"
+/LIBPATH:"C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.36.32532\lib\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.26100.0\ucrt\x64"
+/LIBPATH:"C:\Program Files (x86)\Windows Kits\10\lib\10.0.26100.0\um\x64"
 /NODEFAULTLIB:"LIBCMT"
 /NODEFAULTLIB:"LIBCPMT"
 /NODEFAULTLIB:"LIBCMTD"
@@ -34,23 +34,34 @@
 /NODEFAULTLIB:"LIBCD"
 /NODEFAULTLIB:"LIBCPD"
 /FUNCTIONPADMIN:6
-/NOIMPLIB
-/NOEXP
-"G:/ToS/_Backups/NetworkSample/Intermediate/Build/Win64/x64/NetworkSampleEditor/Development/UnrealEd/SharedPCH.UnrealEd.Cpp20.h.obj"
-"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Module.AINiagara.cpp.obj"
-"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Default.rc2.res"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/CoreUObject/UnrealEditor-CoreUObject.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/Engine/UnrealEditor-Engine.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/Slate/UnrealEditor-Slate.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/SlateCore/UnrealEditor-SlateCore.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/InputCore/UnrealEditor-InputCore.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/EditorFramework/UnrealEditor-EditorFramework.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/EditorStyle/UnrealEditor-EditorStyle.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/UnrealEd/UnrealEditor-UnrealEd.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/LevelEditor/UnrealEditor-LevelEditor.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/InteractiveToolsFramework/UnrealEditor-InteractiveToolsFramework.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/EditorInteractiveToolsFramework/UnrealEditor-EditorInteractiveToolsFramework.lib"
-"../Intermediate/Build/Win64/x64/UnrealEditor/Development/Core/UnrealEditor-Core.lib"
+/NATVIS:"..\Plugins\FX\Niagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\Niagara\Niagara.natvis"
+"G:\ToS\_Backups\NetworkSample\Intermediate\Build\Win64\x64\NetworkSampleEditor\Development\UnrealEd\SharedPCH.UnrealEd.Cpp20.InclOrderUnreal5_1.h.obj"
+"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Module.AINiagara.cpp.obj"
+"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Default.rc2.res"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\CoreUObject\UnrealEditor-CoreUObject.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\Engine\UnrealEditor-Engine.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\Slate\UnrealEditor-Slate.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\SlateCore\UnrealEditor-SlateCore.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\InputCore\UnrealEditor-InputCore.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\EditorFramework\UnrealEditor-EditorFramework.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\EditorStyle\UnrealEditor-EditorStyle.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\UnrealEd\UnrealEditor-UnrealEd.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\LevelEditor\UnrealEditor-LevelEditor.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\InteractiveToolsFramework\UnrealEditor-InteractiveToolsFramework.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\EditorInteractiveToolsFramework\UnrealEditor-EditorInteractiveToolsFramework.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\HTTP\UnrealEditor-HTTP.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\Json\UnrealEditor-Json.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\JsonUtilities\UnrealEditor-JsonUtilities.lib"
+"..\Plugins\FX\Niagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\Niagara\UnrealEditor-Niagara.lib"
+"..\Plugins\FX\Niagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\NiagaraEditor\UnrealEditor-NiagaraEditor.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\ToolMenus\UnrealEditor-ToolMenus.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\WorkspaceMenuStructure\UnrealEditor-WorkspaceMenuStructure.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\PropertyEditor\UnrealEditor-PropertyEditor.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\AssetRegistry\UnrealEditor-AssetRegistry.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\AssetTools\UnrealEditor-AssetTools.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\ContentBrowser\UnrealEditor-ContentBrowser.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\AutomationTest\UnrealEditor-AutomationTest.lib"
+"..\Intermediate\Build\Win64\x64\UnrealEditor\Development\Core\UnrealEditor-Core.lib"
 "delayimp.lib"
 "wininet.lib"
 "rpcrt4.lib"
@@ -76,6 +87,7 @@
 "synchronization.lib"
 "dwmapi.lib"
 "imm32.lib"
-/OUT:"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Binaries/Win64/UnrealEditor-AINiagara.dll"
-/PDB:"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Binaries/Win64/UnrealEditor-AINiagara.pdb"
+/OUT:"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Binaries\Win64\UnrealEditor-AINiagara.dll"
+/IMPLIB:"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\UnrealEditor-AINiagara.sup.lib"
+/PDB:"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Binaries\Win64\UnrealEditor-AINiagara.pdb"
 /ignore:4078

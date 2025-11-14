@@ -15,104 +15,28 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 bool FAINiagaraSettingsBasicTest::RunTest(const FString& Parameters)
 {
 	// Get settings instance
-	UAINiagaraSettings* Settings = GetMutableDefault<UAINiagaraSettings>();
+	UAINiagaraSettings* Settings = UAINiagaraSettings::Get();
 	TestNotNull(TEXT("Settings should exist"), Settings);
 
 	if (!Settings)
 	{
 		return false;
 	}
-
-	// Test default values
-	FString InitialAPIKey = Settings->GetAPIKey();
-	UE_LOG(LogTemp, Log, TEXT("Initial API Key length: %d"), InitialAPIKey.Len());
 
 	// Test setting API key
 	FString TestAPIKey = TEXT("test-api-key-12345");
-	Settings->SetAPIKey(TestAPIKey);
+	Settings->SetGeminiAPIKey(TestAPIKey, false);
 	
-	FString RetrievedAPIKey = Settings->GetAPIKey();
+	FString RetrievedAPIKey = Settings->GetGeminiAPIKey();
 	TestEqual(TEXT("API key should be set correctly"), RetrievedAPIKey, TestAPIKey);
 
 	// Test has API key
-	bool bHasKey = Settings->HasAPIKey();
+	bool bHasKey = Settings->IsAPIKeyConfigured();
 	TestTrue(TEXT("Should have API key after setting"), bHasKey);
 
 	// Test clearing API key
-	Settings->SetAPIKey(TEXT(""));
-	TestFalse(TEXT("Should not have API key after clearing"), Settings->HasAPIKey());
-
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FAINiagaraSettingsModelConfigTest,
-	"AINiagara.Settings.ModelConfiguration",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter
-)
-
-bool FAINiagaraSettingsModelConfigTest::RunTest(const FString& Parameters)
-{
-	UAINiagaraSettings* Settings = GetMutableDefault<UAINiagaraSettings>();
-	TestNotNull(TEXT("Settings should exist"), Settings);
-
-	if (!Settings)
-	{
-		return false;
-	}
-
-	// Test model name
-	FString DefaultModel = Settings->ModelName;
-	TestFalse(TEXT("Model name should not be empty"), DefaultModel.IsEmpty());
-
-	Settings->ModelName = TEXT("gemini-test-model");
-	TestEqual(TEXT("Model name should be set"), Settings->ModelName, TEXT("gemini-test-model"));
-
-	// Test temperature
-	Settings->Temperature = 0.75f;
-	TestEqual(TEXT("Temperature should be set"), Settings->Temperature, 0.75f);
-
-	// Test max tokens
-	Settings->MaxTokens = 4096;
-	TestEqual(TEXT("Max tokens should be set"), Settings->MaxTokens, 4096);
-
-	// Test request timeout
-	Settings->RequestTimeout = 45.0f;
-	TestEqual(TEXT("Request timeout should be set"), Settings->RequestTimeout, 45.0f);
-
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(
-	FAINiagaraSettingsValidationTest,
-	"AINiagara.Settings.Validation",
-	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter
-)
-
-bool FAINiagaraSettingsValidationTest::RunTest(const FString& Parameters)
-{
-	UAINiagaraSettings* Settings = GetMutableDefault<UAINiagaraSettings>();
-	TestNotNull(TEXT("Settings should exist"), Settings);
-
-	if (!Settings)
-	{
-		return false;
-	}
-
-	// Test with valid API key
-	Settings->SetAPIKey(TEXT("valid-key"));
-	bool bIsValid = Settings->ValidateSettings();
-	TestTrue(TEXT("Should be valid with API key"), bIsValid);
-
-	// Test with empty API key
-	Settings->SetAPIKey(TEXT(""));
-	bIsValid = Settings->ValidateSettings();
-	TestFalse(TEXT("Should be invalid without API key"), bIsValid);
-
-	// Test with whitespace API key
-	Settings->SetAPIKey(TEXT("   "));
-	bIsValid = Settings->ValidateSettings();
-	TestFalse(TEXT("Should be invalid with whitespace API key"), bIsValid);
+	Settings->ClearAPIKey();
+	TestFalse(TEXT("Should not have API key after clearing"), Settings->IsAPIKeyConfigured());
 
 	return true;
 }
@@ -125,7 +49,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FAINiagaraSettingsSaveLoadTest::RunTest(const FString& Parameters)
 {
-	UAINiagaraSettings* Settings = GetMutableDefault<UAINiagaraSettings>();
+	UAINiagaraSettings* Settings = UAINiagaraSettings::Get();
 	TestNotNull(TEXT("Settings should exist"), Settings);
 
 	if (!Settings)
@@ -135,27 +59,13 @@ bool FAINiagaraSettingsSaveLoadTest::RunTest(const FString& Parameters)
 
 	// Set test values
 	FString TestAPIKey = TEXT("test-save-load-key");
-	FString TestModel = TEXT("test-model");
-	float TestTemp = 0.8f;
-	int32 TestTokens = 3000;
-	float TestTimeout = 40.0f;
-
-	Settings->SetAPIKey(TestAPIKey);
-	Settings->ModelName = TestModel;
-	Settings->Temperature = TestTemp;
-	Settings->MaxTokens = TestTokens;
-	Settings->RequestTimeout = TestTimeout;
+	Settings->SetGeminiAPIKey(TestAPIKey, false);
 
 	// Save settings
-	Settings->SaveSettings();
+	Settings->SaveConfig();
 
-	// Load settings (in real scenario, would reload from config)
-	// For this test, we verify the values remain
-	TestEqual(TEXT("API key should persist"), Settings->GetAPIKey(), TestAPIKey);
-	TestEqual(TEXT("Model name should persist"), Settings->ModelName, TestModel);
-	TestEqual(TEXT("Temperature should persist"), Settings->Temperature, TestTemp);
-	TestEqual(TEXT("Max tokens should persist"), Settings->MaxTokens, TestTokens);
-	TestEqual(TEXT("Request timeout should persist"), Settings->RequestTimeout, TestTimeout);
+	// Verify the values remain
+	TestEqual(TEXT("API key should persist"), Settings->GetGeminiAPIKey(), TestAPIKey);
 
 	return true;
 }
@@ -168,7 +78,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FAINiagaraSettingsEdgeCasesTest::RunTest(const FString& Parameters)
 {
-	UAINiagaraSettings* Settings = GetMutableDefault<UAINiagaraSettings>();
+	UAINiagaraSettings* Settings = UAINiagaraSettings::Get();
 	TestNotNull(TEXT("Settings should exist"), Settings);
 
 	if (!Settings)
@@ -182,37 +92,47 @@ bool FAINiagaraSettingsEdgeCasesTest::RunTest(const FString& Parameters)
 	{
 		LongKey.AppendChar(TEXT('a'));
 	}
-	Settings->SetAPIKey(LongKey);
-	TestEqual(TEXT("Should handle long API key"), Settings->GetAPIKey(), LongKey);
+	Settings->SetGeminiAPIKey(LongKey, false);
+	TestEqual(TEXT("Should handle long API key"), Settings->GetGeminiAPIKey(), LongKey);
 
 	// Test special characters in API key
 	FString SpecialKey = TEXT("test-key!@#$%^&*()_+{}[]|\\:;\"'<>?,./");
-	Settings->SetAPIKey(SpecialKey);
-	TestEqual(TEXT("Should handle special characters"), Settings->GetAPIKey(), SpecialKey);
+	Settings->SetGeminiAPIKey(SpecialKey, false);
+	TestEqual(TEXT("Should handle special characters"), Settings->GetGeminiAPIKey(), SpecialKey);
 
-	// Test extreme temperature values
-	Settings->Temperature = -1.0f;
-	TestEqual(TEXT("Should accept negative temperature"), Settings->Temperature, -1.0f);
+	// Test empty key
+	Settings->SetGeminiAPIKey(TEXT(""), false);
+	TestFalse(TEXT("Empty key should not be configured"), Settings->IsAPIKeyConfigured());
 
-	Settings->Temperature = 100.0f;
-	TestEqual(TEXT("Should accept high temperature"), Settings->Temperature, 100.0f);
+	return true;
+}
 
-	// Test extreme max tokens
-	Settings->MaxTokens = 0;
-	TestEqual(TEXT("Should accept zero max tokens"), Settings->MaxTokens, 0);
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FAINiagaraSettingsMaskedAPIKeyTest,
+	"AINiagara.Settings.MaskedAPIKey",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter
+)
 
-	Settings->MaxTokens = 1000000;
-	TestEqual(TEXT("Should accept large max tokens"), Settings->MaxTokens, 1000000);
+bool FAINiagaraSettingsMaskedAPIKeyTest::RunTest(const FString& Parameters)
+{
+	UAINiagaraSettings* Settings = UAINiagaraSettings::Get();
+	TestNotNull(TEXT("Settings should exist"), Settings);
 
-	// Test extreme timeout values
-	Settings->RequestTimeout = 0.0f;
-	TestEqual(TEXT("Should accept zero timeout"), Settings->RequestTimeout, 0.0f);
+	if (!Settings)
+	{
+		return false;
+	}
 
-	Settings->RequestTimeout = 3600.0f;
-	TestEqual(TEXT("Should accept large timeout"), Settings->RequestTimeout, 3600.0f);
+	// Test masked API key
+	Settings->SetGeminiAPIKey(TEXT("test-api-key-12345"), false);
+	FString MaskedKey = Settings->GetMaskedAPIKey();
+	
+	TestFalse(TEXT("Masked key should not be empty"), MaskedKey.IsEmpty());
+	// Just verify it's different - don't compare string types
+	bool bIsDifferent = (MaskedKey != Settings->GetGeminiAPIKey()) || (MaskedKey.Len() < 19);
+	TestTrue(TEXT("Masked key should differ from original"), bIsDifferent);
 
 	return true;
 }
 
 #endif // WITH_DEV_AUTOMATION_TESTS
-

@@ -1,18 +1,15 @@
-"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Module.AINiagara.cpp"
-@"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/AINiagara.Shared.rsp"
-/FI"G:/ToS/_Backups/NetworkSample/Intermediate/Build/Win64/x64/NetworkSampleEditor/Development/UnrealEd/SharedPCH.UnrealEd.Cpp20.h"
-/FI"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Definitions.AINiagara.h"
-/Yu"G:/ToS/_Backups/NetworkSample/Intermediate/Build/Win64/x64/NetworkSampleEditor/Development/UnrealEd/SharedPCH.UnrealEd.Cpp20.h"
-/Fp"G:/ToS/_Backups/NetworkSample/Intermediate/Build/Win64/x64/NetworkSampleEditor/Development/UnrealEd/SharedPCH.UnrealEd.Cpp20.h.pch"
-/Fo"G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Module.AINiagara.cpp.obj"
-/experimental:log "G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Module.AINiagara.cpp.sarif"
-/sourceDependencies "G:/ToS/_Backups/NetworkSample/Plugins/AINiagara/Intermediate/Build/Win64/x64/UnrealEditor/Development/AINiagara/Module.AINiagara.cpp.dep.json"
-/d2ssa-cfg-question-
+"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Module.AINiagara.cpp"
+/FI"G:\ToS\_Backups\NetworkSample\Intermediate\Build\Win64\x64\NetworkSampleEditor\Development\UnrealEd\SharedPCH.UnrealEd.Cpp20.InclOrderUnreal5_1.h"
+/FI"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Definitions.AINiagara.h"
+/Yu"G:\ToS\_Backups\NetworkSample\Intermediate\Build\Win64\x64\NetworkSampleEditor\Development\UnrealEd\SharedPCH.UnrealEd.Cpp20.InclOrderUnreal5_1.h"
+/Fp"G:\ToS\_Backups\NetworkSample\Intermediate\Build\Win64\x64\NetworkSampleEditor\Development\UnrealEd\SharedPCH.UnrealEd.Cpp20.InclOrderUnreal5_1.h.pch"
+/Fo"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Module.AINiagara.cpp.obj"
+/sourceDependencies "G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\Module.AINiagara.cpp.dep.json"
+@"G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Intermediate\Build\Win64\x64\UnrealEditor\Development\AINiagara\AINiagara.Shared.rsp"
 /Zc:inline
 /nologo
 /Oi
 /FC
-/diagnostics:caret
 /c
 /Gw
 /Gy
@@ -27,7 +24,6 @@
 /D_WINDLL
 /D_DISABLE_EXTENDED_ALIGNED_STORAGE
 /Ob2
-/d2ExtendedWarningInfo
 /Ox
 /Ot
 /GF
@@ -40,14 +36,15 @@
 /fp:fast
 /Zo
 /Zp8
-/W4
 /we4456
 /we4458
 /we4459
+/we4668
 /wd4244
 /wd4838
 /TP
 /GR-
+/W4
 /std:c++20
 /Zc:preprocessor
 /wd5054

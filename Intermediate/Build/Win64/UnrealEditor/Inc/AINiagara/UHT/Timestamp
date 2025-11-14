@@ -1,3 +1,10 @@
 G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\AINiagaraEditorMode.h
-G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Private\Tools\AINiagaraSimpleTool.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\GeminiAPIClient.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\VFXPromptBuilder.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\VFXDSLParser.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\ConversationHistoryManager.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\NiagaraSystemGenerator.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\VFXDSL.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Public\Core\AINiagaraSettings.h
 G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Private\Tools\AINiagaraInteractiveTool.h
+G:\ToS\_Backups\NetworkSample\Plugins\AINiagara\Source\AINiagara\Private\Tools\AINiagaraSimpleTool.h
