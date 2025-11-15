@@ -16,10 +16,17 @@
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
 #include "Misc/DateTime.h"
+#include "HAL/PlatformProcess.h"
+#include "Containers/Ticker.h"
+#include "Async/Async.h"
+#include "HAL/ThreadHeartBeat.h"
 
 void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 {
 	OnAPIKeyConfigured = InArgs._OnAPIKeyConfigured;
+	
+	// Initialize validity flag
+	bIsValid = true;
 	
 	ChildSlot
 	[
@@ -150,11 +157,14 @@ void SAINiagaraAPIKeyDialog::Construct(const FArguments& InArgs)
 
 	// Focus on input box
 	FSlateApplication::Get().SetKeyboardFocus(APIKeyInputBox.ToSharedRef());
+	
+	// Create weak pointer to self for safe callbacks (after widget is fully constructed)
+	WeakSelf = SharedThis(this);
 }
 
 FReply SAINiagaraAPIKeyDialog::OnTestClicked()
 {
-	if (!APIKeyInputBox.IsValid())
+	if (!APIKeyInputBox.IsValid() || !bIsValid)
 	{
 		return FReply::Handled();
 	}
@@ -171,23 +181,109 @@ FReply SAINiagaraAPIKeyDialog::OnTestClicked()
 	SetButtonsEnabled(false);
 	UpdateStatus(TEXT("Testing API key..."));
 
+	// Capture weak pointer for safe callbacks
+	TWeakPtr<SAINiagaraAPIKeyDialog> WeakDialog = SharedThis(this);
+
 	// Test API key
 	FGeminiAPIClient APIClient;
+	
+	// Always use AsyncTask to ensure we're on the game thread
+	// HTTP callbacks are executed on HTTP thread, not game thread
 	APIClient.TestAPIKey(
 		APIKey,
-		FOnGeminiResponse::CreateLambda([this, APIKey](const FString& ResponseText)
+		FOnGeminiResponse::CreateLambda([WeakDialog, APIKey](const FString& ResponseText)
 		{
-			SetButtonsEnabled(true);
-			CurrentAPIKey = APIKey;
-			UpdateStatus(TEXT("API key is valid! Click Save to store it."), false);
+			UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey response callback executed (outside AsyncTask)"));
+			
+			// Always execute on game thread - HandleRequestCompleteOnGameThread already handles thread safety
+			// But we still need to ensure UI updates are on game thread
+			if (IsInGameThread())
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Already on game thread, updating UI directly"));
+				TSharedPtr<SAINiagaraAPIKeyDialog> Dialog = WeakDialog.Pin();
+				if (Dialog.IsValid() && Dialog->IsValid() && FSlateApplication::IsInitialized())
+				{
+					UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey response - widget is valid, updating UI"));
+					Dialog->SetButtonsEnabled(true);
+					Dialog->CurrentAPIKey = APIKey;
+					Dialog->UpdateStatus(TEXT("API key is valid! Click Save to store it."), false);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("AINiagara: TestAPIKey response - widget is invalid or Slate not initialized"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Not on game thread, scheduling AsyncTask"));
+				AsyncTask(ENamedThreads::GameThread, [WeakDialog, APIKey, ResponseText]()
+				{
+					UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey response callback executed (inside AsyncTask)"));
+					
+					// Check if widget still exists using weak pointer
+					TSharedPtr<SAINiagaraAPIKeyDialog> Dialog = WeakDialog.Pin();
+					if (Dialog.IsValid() && Dialog->IsValid() && FSlateApplication::IsInitialized())
+					{
+						UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey response - widget is valid, updating UI"));
+						Dialog->SetButtonsEnabled(true);
+						Dialog->CurrentAPIKey = APIKey;
+						Dialog->UpdateStatus(TEXT("API key is valid! Click Save to store it."), false);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("AINiagara: TestAPIKey response - widget is invalid or Slate not initialized"));
+					}
+				});
+			}
 		}),
-		FOnGeminiError::CreateLambda([this](int32 ErrorCode, const FString& ErrorMessage)
+		FOnGeminiError::CreateLambda([WeakDialog](int32 ErrorCode, const FString& ErrorMessage)
 		{
-			SetButtonsEnabled(true);
-			FString ErrorMsg = FString::Printf(TEXT("API key test failed (%d): %s"), ErrorCode, *ErrorMessage);
-			UpdateStatus(ErrorMsg, true);
+			UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey error callback executed (outside AsyncTask): %d - %s"), ErrorCode, *ErrorMessage);
+			
+			// Always execute on game thread - HandleRequestCompleteOnGameThread already handles thread safety
+			// But we still need to ensure UI updates are on game thread
+			if (IsInGameThread())
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Already on game thread, updating UI directly"));
+				TSharedPtr<SAINiagaraAPIKeyDialog> Dialog = WeakDialog.Pin();
+				if (Dialog.IsValid() && Dialog->IsValid() && FSlateApplication::IsInitialized())
+				{
+					UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey error - widget is valid, updating UI"));
+					Dialog->SetButtonsEnabled(true);
+					FString ErrorMsg = FString::Printf(TEXT("API key test failed (%d): %s"), ErrorCode, *ErrorMessage);
+					Dialog->UpdateStatus(ErrorMsg, true);
+				}
+				else
+				{
+					UE_LOG(LogTemp, Warning, TEXT("AINiagara: TestAPIKey error - widget is invalid or Slate not initialized"));
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Log, TEXT("AINiagara: Not on game thread, scheduling AsyncTask"));
+				AsyncTask(ENamedThreads::GameThread, [WeakDialog, ErrorCode, ErrorMessage]()
+				{
+					UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey error callback executed (inside AsyncTask): %d - %s"), ErrorCode, *ErrorMessage);
+					
+					// Check if widget still exists using weak pointer
+					TSharedPtr<SAINiagaraAPIKeyDialog> Dialog = WeakDialog.Pin();
+					if (Dialog.IsValid() && Dialog->IsValid() && FSlateApplication::IsInitialized())
+					{
+						UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey error - widget is valid, updating UI"));
+						Dialog->SetButtonsEnabled(true);
+						FString ErrorMsg = FString::Printf(TEXT("API key test failed (%d): %s"), ErrorCode, *ErrorMessage);
+						Dialog->UpdateStatus(ErrorMsg, true);
+					}
+					else
+					{
+						UE_LOG(LogTemp, Warning, TEXT("AINiagara: TestAPIKey error - widget is invalid or Slate not initialized"));
+					}
+				});
+			}
 		})
 	);
+	
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: TestAPIKey request sent"));
 
 	return FReply::Handled();
 }
@@ -228,6 +324,8 @@ FReply SAINiagaraAPIKeyDialog::OnSaveClicked()
 
 FReply SAINiagaraAPIKeyDialog::OnCancelClicked()
 {
+	// Invalidate widget before closing
+	Invalidate();
 	OnDialogCancelled.ExecuteIfBound();
 	return FReply::Handled();
 }
@@ -244,21 +342,53 @@ void SAINiagaraAPIKeyDialog::UpdateStatus(const FString& Message, bool bIsError)
 
 void SAINiagaraAPIKeyDialog::SetButtonsEnabled(bool bEnabled)
 {
-	if (TestButton.IsValid())
+	// Check if widget is still valid before accessing members
+	if (!bIsValid)
 	{
-		TestButton->SetEnabled(bEnabled);
+		return;
 	}
-	if (SaveButton.IsValid())
+
+	// Ensure Slate is initialized before accessing widgets
+	if (!FSlateApplication::IsInitialized())
 	{
-		SaveButton->SetEnabled(bEnabled);
+		return;
 	}
-	if (CancelButton.IsValid())
+
+	// Ensure we're on the game thread before accessing Slate widgets
+	if (!IsInGameThread())
 	{
-		CancelButton->SetEnabled(bEnabled);
+		UE_LOG(LogTemp, Error, TEXT("AINiagara: SetButtonsEnabled called from non-game thread!"));
+		return;
 	}
-	if (APIKeyInputBox.IsValid())
+
+	// Safely enable/disable buttons with additional safety checks
+	// Wrap in try-catch to handle any potential crashes from invalid Slate attributes
+	try
 	{
-		APIKeyInputBox->SetEnabled(bEnabled);
+		// Check each widget individually before modifying
+		// Use IsValid() to ensure the widget pointer is valid
+		if (TestButton.IsValid() && TestButton.Get() != nullptr)
+		{
+			TestButton->SetEnabled(bEnabled);
+		}
+		if (SaveButton.IsValid() && SaveButton.Get() != nullptr)
+		{
+			SaveButton->SetEnabled(bEnabled);
+		}
+		if (CancelButton.IsValid() && CancelButton.Get() != nullptr)
+		{
+			CancelButton->SetEnabled(bEnabled);
+		}
+		if (APIKeyInputBox.IsValid() && APIKeyInputBox.Get() != nullptr)
+		{
+			APIKeyInputBox->SetEnabled(bEnabled);
+		}
+	}
+	catch (...)
+	{
+		// Widget was destroyed - mark as invalid and silently ignore
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: SetButtonsEnabled failed - widget may have been destroyed"));
+		bIsValid = false; // Mark as invalid to prevent further attempts
 	}
 }
 

@@ -13,6 +13,8 @@
 #include "Misc/App.h"
 #include "HAL/IConsoleManager.h"
 #include "HAL/PlatformFilemanager.h"
+#include "Async/Async.h"
+#include "HAL/PlatformTLS.h"
 
 const FString FGeminiAPIClient::BaseURL = TEXT("https://generativelanguage.googleapis.com/v1beta");
 const FString FGeminiAPIClient::ChatCompletionEndpoint = TEXT("/models/gemini-pro:generateContent");
@@ -30,12 +32,12 @@ FGeminiAPIClient::~FGeminiAPIClient()
 {
 }
 
-void FGeminiAPIClient::SetAPIKey(const FString& InAPIKey)
+void FGeminiAPIClient::SetAPIKey(const FString& InAPIKey, bool bSaveToSettings)
 {
 	APIKey = InAPIKey;
 	
-	// Also save to settings
-	if (UAINiagaraSettings* Settings = UAINiagaraSettings::Get())
+	// Also save to settings if requested
+	if (bSaveToSettings && UAINiagaraSettings* Settings = UAINiagaraSettings::Get())
 	{
 		Settings->SetGeminiAPIKey(InAPIKey, true);
 	}
@@ -83,9 +85,9 @@ void FGeminiAPIClient::TestAPIKey(
 	TArray<FConversationMessage> EmptyHistory;
 	TArray<FVFXToolFunction> EmptyTools;
 	
-	// Temporarily set the API key for testing
+	// Temporarily set the API key for testing (don't save to settings)
 	FString SavedAPIKey = APIKey;
-	SetAPIKey(InAPIKey);
+	SetAPIKey(InAPIKey, false); // Don't save to settings during test
 	
 	SendChatCompletion(
 		TestPrompt,
@@ -96,7 +98,7 @@ void FGeminiAPIClient::TestAPIKey(
 	);
 	
 	// Restore original API key
-	SetAPIKey(SavedAPIKey);
+	SetAPIKey(SavedAPIKey, false);
 }
 
 /**
@@ -152,11 +154,15 @@ void FGeminiAPIClient::SendChatCompletion(
 			bool bWasSuccessful
 		)
 		{
+			UE_LOG(LogTemp, Log, TEXT("AINiagara: HTTP request completed - Success: %d, Valid: %d"), 
+				bWasSuccessful, HttpResponse.IsValid() ? 1 : 0);
+			
 			HandleRequestComplete(HttpRequest, HttpResponse, bWasSuccessful, OnResponse, OnError);
 		}
 	);
 	
 	// Send request
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: Sending HTTP request to: %s"), *URL);
 	Request->ProcessRequest();
 }
 
@@ -409,61 +415,110 @@ void FGeminiAPIClient::HandleRequestComplete(
 	FOnGeminiError OnError
 )
 {
-	if (!bWasSuccessful || !Response.IsValid())
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: HandleRequestComplete called - Success: %d, ResponseValid: %d, Thread: %d"), 
+		bWasSuccessful, Response.IsValid() ? 1 : 0, IsInGameThread() ? 1 : 0);
+	
+	// Capture response data before potentially switching threads
+	int32 ResponseCode = 0;
+	FString ResponseBody;
+	
+	if (Response.IsValid())
+	{
+		ResponseCode = Response->GetResponseCode();
+		ResponseBody = Response->GetContentAsString();
+	}
+	
+	// Always execute delegates on game thread to ensure UI updates work correctly
+	// HTTP callbacks may execute on HTTP thread, not game thread
+	if (IsInGameThread())
+	{
+		// Already on game thread - execute directly
+		HandleRequestCompleteOnGameThread(bWasSuccessful, Response.IsValid(), ResponseCode, ResponseBody, OnResponse, OnError);
+	}
+	else
+	{
+		// Not on game thread - schedule for game thread
+		// Capture all data by value to avoid issues with destroyed objects
+		AsyncTask(ENamedThreads::GameThread, [bWasSuccessful, ResponseIsValid = Response.IsValid(), ResponseCode, ResponseBody, OnResponse, OnError]()
+		{
+			HandleRequestCompleteOnGameThread(bWasSuccessful, ResponseIsValid, ResponseCode, ResponseBody, OnResponse, OnError);
+		});
+	}
+}
+
+void FGeminiAPIClient::HandleRequestCompleteOnGameThread(
+	bool bWasSuccessful,
+	bool bResponseValid,
+	int32 ResponseCode,
+	const FString& ResponseBody,
+	FOnGeminiResponse OnResponse,
+	FOnGeminiError OnError
+)
+{
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: HandleRequestCompleteOnGameThread - Success: %d, Valid: %d, Code: %d, OnGameThread: %d"), 
+		bWasSuccessful, bResponseValid ? 1 : 0, ResponseCode, IsInGameThread() ? 1 : 0);
+	
+	if (!bWasSuccessful || !bResponseValid)
 	{
 		// Network error - could retry, but for now just report
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: HTTP request failed - Network error"));
 		OnError.ExecuteIfBound(
-			Response.IsValid() ? Response->GetResponseCode() : 0,
+			ResponseCode,
 			TEXT("Network error: Request failed or no response received")
 		);
 		return;
 	}
 	
-	const int32 ResponseCode = Response->GetResponseCode();
+	UE_LOG(LogTemp, Log, TEXT("AINiagara: HTTP response code: %d, Body length: %d"), ResponseCode, ResponseBody.Len());
 	
 	if (ResponseCode == 200)
 	{
-		FString ResponseBody = Response->GetContentAsString();
 		FString ResponseText;
-		
 		if (ParseResponse(ResponseBody, ResponseText))
 		{
+			UE_LOG(LogTemp, Log, TEXT("AINiagara: Response parsed successfully, calling OnResponse. Text length: %d"), ResponseText.Len());
 			OnResponse.ExecuteIfBound(ResponseText);
 		}
 		else
 		{
+			UE_LOG(LogTemp, Warning, TEXT("AINiagara: Failed to parse response. Body: %s"), *ResponseBody.Left(200));
 			OnError.ExecuteIfBound(500, TEXT("Failed to parse response from API"));
 		}
 	}
 	else if (ResponseCode == 401)
 	{
 		// Unauthorized - API key issue
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: Unauthorized - Invalid API key"));
 		OnError.ExecuteIfBound(ResponseCode, TEXT("Unauthorized: Invalid or missing API key. Please check your API key configuration."));
 	}
 	else if (ResponseCode == 403)
 	{
 		// Forbidden - API key doesn't have permission
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: Forbidden - API key lacks permission"));
 		OnError.ExecuteIfBound(ResponseCode, TEXT("Forbidden: API key does not have permission for this operation."));
 	}
 	else if (ResponseCode == 429)
 	{
 		// Rate limited
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: Rate limit exceeded"));
 		OnError.ExecuteIfBound(ResponseCode, TEXT("Rate limit exceeded: Too many requests. Please wait before trying again."));
 	}
 	else if (ResponseCode >= 500)
 	{
 		// Server error - could retry
-		FString ErrorMessage = FString::Printf(TEXT("Server error (%d): %s"), ResponseCode, *Response->GetContentAsString());
+		FString ErrorMessage = FString::Printf(TEXT("Server error (%d): %s"), ResponseCode, *ResponseBody.Left(200));
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: Server error: %s"), *ErrorMessage);
 		OnError.ExecuteIfBound(ResponseCode, ErrorMessage);
 	}
 	else
 	{
 		// Other client errors
-		FString ErrorMessage = Response->GetContentAsString();
+		FString ErrorMessage = ResponseBody;
 		if (ErrorMessage.IsEmpty())
 		{
 			ErrorMessage = FString::Printf(TEXT("Request failed with status code %d"), ResponseCode);
 		}
+		UE_LOG(LogTemp, Warning, TEXT("AINiagara: Client error (%d): %s"), ResponseCode, *ErrorMessage.Left(200));
 		OnError.ExecuteIfBound(ResponseCode, ErrorMessage);
 	}
 }

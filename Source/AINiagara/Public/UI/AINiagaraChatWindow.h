@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Framework/Docking/TabManager.h"
 #include "Widgets/SWindow.h"
+#include "Delegates/Delegate.h"
 
 class SWidget;
 
@@ -14,6 +15,12 @@ class SWidget;
 class AINIAGARA_API FAINiagaraChatWindow
 {
 public:
+	/**
+	 * Create the chat window widget
+	 * This is used by the module to create the widget for the tab
+	 */
+	static TSharedRef<SWidget> CreateChatWidget();
+
 	/**
 	 * Open the chat window
 	 */
@@ -31,16 +38,11 @@ public:
 
 	/**
 	 * Show API key configuration dialog
+	 * @param OnConfiguredCallback Optional callback to execute after API key is configured (if null, opens chat window)
 	 */
-	static void ShowAPIKeyDialog();
+	static void ShowAPIKeyDialog(FSimpleDelegate OnConfiguredCallback = FSimpleDelegate());
 
 private:
-	/**
-	 * Create the chat window widget
-	 */
-	static TSharedRef<SWidget> CreateChatWidget();
-
 	/** Reference to the chat window */
 	static TSharedPtr<SWindow> ChatWindow;
 };
-

@@ -3,18 +3,19 @@
 #include "Core/CascadeSystemGenerator.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
 #include "Particles/ParticleModule.h"
 #include "Particles/ParticleModuleRequired.h"
 // Note: ParticleModuleSpawn may not exist in all UE versions, use base class
-#include "Particles/ParticleModuleLifetime.h"
-#include "Particles/ParticleModuleSize.h"
-#include "Particles/ParticleModuleColor.h"
-#include "Particles/ParticleModuleColorOverLife.h"
-#include "Particles/ParticleModuleVelocity.h"
-#include "Particles/ParticleModuleVelocityOverLifetime.h"
-#include "Particles/ParticleModuleRotation.h"
-#include "Particles/ParticleModuleRotationRate.h"
-#include "Particles/ParticleModuleTypeDataBase.h"
+#include "Particles/Size/ParticleModuleSize.h"
+#include "Particles/Color/ParticleModuleColor.h"
+#include "Particles/Color/ParticleModuleColorOverLife.h"
+#include "Particles/Velocity/ParticleModuleVelocity.h"
+#include "Particles/Velocity/ParticleModuleVelocityOverLifetime.h"
+#include "Particles/Rotation/ParticleModuleRotation.h"
+// Note: ParticleModuleRotationRate may not exist in UE 5.3
+// #include "Particles/ParticleModuleRotationRate.h"
+#include "Particles/TypeData/ParticleModuleTypeDataBase.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/Package.h"
 #include "UObject/UObjectGlobals.h"
@@ -22,6 +23,160 @@
 #include "UObject/PropertyAccessUtil.h"
 #include "UObject/UnrealType.h"
 #include "Misc/MessageDialog.h"
+#include "Tools/MeshDetectionHandler.h"
+#include "Distributions/DistributionFloat.h"
+#include "Distributions/DistributionVector.h"
+#include "Distributions/DistributionFloatConstant.h"
+#include "Distributions/DistributionVectorConstant.h"
+#include "Distributions/DistributionFloatUniform.h"
+#include "Distributions/DistributionVectorUniform.h"
+
+// Helper function to create and configure a constant vector distribution
+static UDistributionVectorConstant* CreateVectorConstantDistribution(UObject* Outer, const FVector& Value)
+{
+	UDistributionVectorConstant* Distribution = NewObject<UDistributionVectorConstant>(Outer);
+	if (Distribution)
+	{
+		Distribution->Constant = Value;
+		Distribution->bLockAxes = false;
+	}
+	return Distribution;
+}
+
+// Helper function to create and configure a uniform vector distribution
+static UDistributionVectorUniform* CreateVectorUniformDistribution(UObject* Outer, const FVector& Min, const FVector& Max)
+{
+	UDistributionVectorUniform* Distribution = NewObject<UDistributionVectorUniform>(Outer);
+	if (Distribution)
+	{
+		Distribution->Min = Min;
+		Distribution->Max = Max;
+		Distribution->bLockAxes = false;
+	}
+	return Distribution;
+}
+
+// Helper function to create and configure a constant float distribution
+static UDistributionFloatConstant* CreateFloatConstantDistribution(UObject* Outer, float Value)
+{
+	UDistributionFloatConstant* Distribution = NewObject<UDistributionFloatConstant>(Outer);
+	if (Distribution)
+	{
+		Distribution->Constant = Value;
+	}
+	return Distribution;
+}
+
+// Helper function to set a FRawDistributionVector using reflection
+static bool SetRawDistributionVector(UParticleModule* Module, const FString& PropertyName, UDistributionVector* Distribution)
+{
+	if (!Module || !Distribution)
+	{
+		return false;
+	}
+
+	FStructProperty* DistProperty = FindFProperty<FStructProperty>(Module->GetClass(), *PropertyName);
+	if (!DistProperty)
+	{
+		return false;
+	}
+
+	FRawDistribution* RawDist = DistProperty->ContainerPtrToValuePtr<FRawDistribution>(Module);
+	if (!RawDist)
+	{
+		return false;
+	}
+
+	// Set the distribution using reflection
+	FProperty* DistObjProperty = DistProperty->Struct->FindPropertyByName(TEXT("Distribution"));
+	if (DistObjProperty)
+	{
+		UObject** DistPtr = DistObjProperty->ContainerPtrToValuePtr<UObject*>(RawDist);
+		if (DistPtr)
+		{
+			*DistPtr = Distribution;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// Helper function to set a FRawDistributionFloat using reflection
+static bool SetRawDistributionFloat(UParticleModule* Module, const FString& PropertyName, UDistributionFloat* Distribution)
+{
+	if (!Module || !Distribution)
+	{
+		return false;
+	}
+
+	FStructProperty* DistProperty = FindFProperty<FStructProperty>(Module->GetClass(), *PropertyName);
+	if (!DistProperty)
+	{
+		return false;
+	}
+
+	FRawDistribution* RawDist = DistProperty->ContainerPtrToValuePtr<FRawDistribution>(Module);
+	if (!RawDist)
+	{
+		return false;
+	}
+
+	// Set the distribution using reflection
+	FProperty* DistObjProperty = DistProperty->Struct->FindPropertyByName(TEXT("Distribution"));
+	if (DistObjProperty)
+	{
+		UObject** DistPtr = DistObjProperty->ContainerPtrToValuePtr<UObject*>(RawDist);
+		if (DistPtr)
+		{
+			*DistPtr = Distribution;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+// Helper function to get or create the first LOD level
+static UParticleLODLevel* GetOrCreateFirstLODLevel(UParticleEmitter* Emitter, FString& OutError)
+{
+	if (!Emitter)
+	{
+		OutError = TEXT("Emitter is null");
+		return nullptr;
+	}
+
+	// Get or create first LOD level
+	if (Emitter->LODLevels.Num() == 0)
+	{
+		int32 LODLevelIndex = Emitter->CreateLODLevel(0, true);
+		if (LODLevelIndex < 0 || Emitter->LODLevels.Num() == 0)
+		{
+			OutError = TEXT("Failed to create LOD level");
+			return nullptr;
+		}
+	}
+
+	UParticleLODLevel* LODLevel = Emitter->LODLevels[0];
+	if (!LODLevel)
+	{
+		OutError = TEXT("First LOD level is null");
+		return nullptr;
+	}
+
+	// Ensure RequiredModule exists
+	if (!LODLevel->RequiredModule)
+	{
+		LODLevel->RequiredModule = NewObject<UParticleModuleRequired>(LODLevel);
+		if (!LODLevel->RequiredModule)
+		{
+			OutError = TEXT("Failed to create RequiredModule");
+			return nullptr;
+		}
+	}
+
+	return LODLevel;
+}
 
 bool UCascadeSystemGenerator::CreateSystemFromDSL(
 	const FVFXDSL& DSL,
@@ -62,7 +217,9 @@ bool UCascadeSystemGenerator::CreateSystemFromDSL(
 	}
 
 	// Configure system properties
-	OutSystem->Duration = DSL.Effect.Duration;
+	// Note: UParticleSystem doesn't have a Duration property in UE 5.3
+	// Duration is stored in each emitter's RequiredModule->EmitterDuration
+	// This will be set when configuring each emitter
 	OutSystem->bOrientZAxisTowardCamera = false;
 	OutSystem->bUseFixedRelativeBoundingBox = false;
 
@@ -174,10 +331,17 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 	UParticleModule* SpawnModule = nullptr;
 	UClass* SpawnModuleClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.ParticleModuleSpawn"));
 	
+	// Get or create first LOD level
+	UParticleLODLevel* LODLevel = GetOrCreateFirstLODLevel(Emitter, OutError);
+	if (!LODLevel)
+	{
+		return false;
+	}
+
 	if (!SpawnModuleClass)
 	{
 		// Fallback: try to find any existing spawn module
-		for (UParticleModule* Module : Emitter->SpawnModules)
+		for (UParticleModule* Module : LODLevel->SpawnModules)
 		{
 			if (Module && Module->GetClass()->GetName().Contains(TEXT("Spawn")))
 			{
@@ -189,7 +353,7 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 	else
 	{
 		// Find existing spawn module
-		for (UParticleModule* Module : Emitter->SpawnModules)
+		for (UParticleModule* Module : LODLevel->SpawnModules)
 		{
 			if (Module && Module->IsA(SpawnModuleClass))
 			{
@@ -201,13 +365,13 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 		if (!SpawnModule)
 		{
 			// Create new spawn module
-			SpawnModule = NewObject<UParticleModule>(Emitter, SpawnModuleClass);
+			SpawnModule = NewObject<UParticleModule>(LODLevel, SpawnModuleClass);
 			if (!SpawnModule)
 			{
 				OutError = TEXT("Failed to create UParticleModuleSpawn");
 				return false;
 			}
-			Emitter->SpawnModules.Add(SpawnModule);
+			LODLevel->SpawnModules.Add(SpawnModule);
 		}
 	}
 
@@ -220,7 +384,7 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 	// Configure spawn rate using reflection
 	if (SpawnersDSL.Rate.SpawnRate > 0.0f)
 	{
-		FStructProperty* RateProperty = FindField<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
+		FStructProperty* RateProperty = FindFProperty<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
 		if (RateProperty)
 		{
 			FVector2D* RateValue = RateProperty->ContainerPtrToValuePtr<FVector2D>(SpawnModule);
@@ -234,7 +398,7 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 	// Configure burst spawns using reflection
 	if (SpawnersDSL.Burst.Count > 0)
 	{
-		FArrayProperty* BurstListProperty = FindField<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
+		FArrayProperty* BurstListProperty = FindFProperty<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
 		if (BurstListProperty)
 		{
 			FScriptArrayHelper ArrayHelper(BurstListProperty, BurstListProperty->ContainerPtrToValuePtr<void>(SpawnModule));
@@ -248,9 +412,9 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 			if (BurstStructProperty && BurstData)
 			{
 				// Set Count
-				FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
-				FIntProperty* CountLowProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
-				FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+				FIntProperty* CountProperty = FindFProperty<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+				FIntProperty* CountLowProperty = FindFProperty<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
+				FFloatProperty* TimeProperty = FindFProperty<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
 				
 				if (CountProperty) CountProperty->SetPropertyValue_InContainer(BurstData, SpawnersDSL.Burst.Count);
 				if (CountLowProperty) CountLowProperty->SetPropertyValue_InContainer(BurstData, SpawnersDSL.Burst.Count);
@@ -265,9 +429,9 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 				
 				if (BurstStructProperty && BurstData2)
 				{
-					FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
-					FIntProperty* CountLowProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
-					FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+					FIntProperty* CountProperty = FindFProperty<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+					FIntProperty* CountLowProperty = FindFProperty<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
+					FFloatProperty* TimeProperty = FindFProperty<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
 					
 					if (CountProperty) CountProperty->SetPropertyValue_InContainer(BurstData2, SpawnersDSL.Burst.Count);
 					if (CountLowProperty) CountLowProperty->SetPropertyValue_InContainer(BurstData2, SpawnersDSL.Burst.Count);
@@ -291,35 +455,29 @@ bool UCascadeSystemGenerator::ConfigureInitializeModule(
 		return false;
 	}
 
-	// Find or create required module (contains initialization parameters)
-	UParticleModuleRequired* RequiredModule = nullptr;
-	for (UParticleModule* Module : Emitter->RequiredModules)
+	// Get or create first LOD level
+	UParticleLODLevel* LODLevel = GetOrCreateFirstLODLevel(Emitter, OutError);
+	if (!LODLevel)
 	{
-		if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
-		{
-			RequiredModule = Required;
-			break;
-		}
+		return false;
 	}
 
+	// Get required module (contains initialization parameters)
+	UParticleModuleRequired* RequiredModule = LODLevel->RequiredModule;
 	if (!RequiredModule)
 	{
-		RequiredModule = NewObject<UParticleModuleRequired>(Emitter);
-		if (!RequiredModule)
-		{
-			OutError = TEXT("Failed to create UParticleModuleRequired");
-			return false;
-		}
-		Emitter->RequiredModules.Add(RequiredModule);
+		OutError = TEXT("Failed to get RequiredModule");
+		return false;
 	}
 
-	// Configure material (will be set in render module)
 	// Configure emitter time (duration)
-	RequiredModule->EmitterDuration = 5.0f; // Default, can be overridden
+	// Note: Duration should be passed from DSL.Effect.Duration, but we don't have access here
+	// This should be set in CreateEmitterFromDSL or passed as a parameter
+	RequiredModule->EmitterDuration = 5.0f; // Default, will be overridden if DSL provides duration
 
 	// Find or create size module
 	UParticleModuleSize* SizeModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleSize* Size = Cast<UParticleModuleSize>(Module))
 		{
@@ -330,21 +488,42 @@ bool UCascadeSystemGenerator::ConfigureInitializeModule(
 
 	if (!SizeModule)
 	{
-		SizeModule = NewObject<UParticleModuleSize>(Emitter);
+		SizeModule = NewObject<UParticleModuleSize>(LODLevel);
 		if (SizeModule)
 		{
-			Emitter->SpawnModules.Add(SizeModule);
+			LODLevel->SpawnModules.Add(SizeModule);
 		}
 	}
 
 	if (SizeModule)
 	{
-		SizeModule->StartSize = FVector2D(InitializationDSL.Size.Min, InitializationDSL.Size.Max);
+		// Configure size distribution
+		// Use uniform distribution if Min != Max, otherwise use constant
+		FVector SizeValue(InitializationDSL.Size.Min, InitializationDSL.Size.Min, InitializationDSL.Size.Min);
+		UDistributionVector* SizeDistribution = nullptr;
+		
+		if (FMath::IsNearlyEqual(InitializationDSL.Size.Min, InitializationDSL.Size.Max))
+		{
+			// Constant size
+			SizeDistribution = CreateVectorConstantDistribution(SizeModule, SizeValue);
+		}
+		else
+		{
+			// Uniform size range
+			FVector MinSize(InitializationDSL.Size.Min, InitializationDSL.Size.Min, InitializationDSL.Size.Min);
+			FVector MaxSize(InitializationDSL.Size.Max, InitializationDSL.Size.Max, InitializationDSL.Size.Max);
+			SizeDistribution = CreateVectorUniformDistribution(SizeModule, MinSize, MaxSize);
+		}
+		
+		if (SizeDistribution)
+		{
+			SetRawDistributionVector(SizeModule, TEXT("StartSize"), SizeDistribution);
+		}
 	}
 
 	// Find or create color module
 	UParticleModuleColor* ColorModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleColor* Color = Cast<UParticleModuleColor>(Module))
 		{
@@ -355,27 +534,41 @@ bool UCascadeSystemGenerator::ConfigureInitializeModule(
 
 	if (!ColorModule)
 	{
-		ColorModule = NewObject<UParticleModuleColor>(Emitter);
+		ColorModule = NewObject<UParticleModuleColor>(LODLevel);
 		if (ColorModule)
 		{
-			Emitter->SpawnModules.Add(ColorModule);
+			LODLevel->SpawnModules.Add(ColorModule);
 		}
 	}
 
 	if (ColorModule)
 	{
-		FLinearColor StartColor(
-			InitializationDSL.Color.R,
-			InitializationDSL.Color.G,
-			InitializationDSL.Color.B,
-			InitializationDSL.Color.A
-		);
-		ColorModule->StartColor = FVector4(StartColor.R, StartColor.G, StartColor.B, StartColor.A);
+		// Configure color distribution
+		// FRawDistributionLinearColor uses a vector distribution for RGB and float for Alpha
+		FVector ColorRGB(InitializationDSL.Color.R, InitializationDSL.Color.G, InitializationDSL.Color.B);
+		UDistributionVectorConstant* ColorRGBDistribution = CreateVectorConstantDistribution(ColorModule, ColorRGB);
+		
+		if (ColorRGBDistribution)
+		{
+			// Set RGB distribution
+			SetRawDistributionVector(ColorModule, TEXT("StartColor"), ColorRGBDistribution);
+		}
+		
+		// Set alpha separately if needed (StartAlpha property)
+		FStructProperty* AlphaProperty = FindFProperty<FStructProperty>(ColorModule->GetClass(), TEXT("StartAlpha"));
+		if (AlphaProperty)
+		{
+			UDistributionFloatConstant* AlphaDistribution = CreateFloatConstantDistribution(ColorModule, InitializationDSL.Color.A);
+			if (AlphaDistribution)
+			{
+				SetRawDistributionFloat(ColorModule, TEXT("StartAlpha"), AlphaDistribution);
+			}
+		}
 	}
 
 	// Find or create velocity module
 	UParticleModuleVelocity* VelocityModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleVelocity* Velocity = Cast<UParticleModuleVelocity>(Module))
 		{
@@ -386,47 +579,31 @@ bool UCascadeSystemGenerator::ConfigureInitializeModule(
 
 	if (!VelocityModule)
 	{
-		VelocityModule = NewObject<UParticleModuleVelocity>(Emitter);
+		VelocityModule = NewObject<UParticleModuleVelocity>(LODLevel);
 		if (VelocityModule)
 		{
-			Emitter->SpawnModules.Add(VelocityModule);
+			LODLevel->SpawnModules.Add(VelocityModule);
 		}
 	}
 
 	if (VelocityModule)
 	{
+		// Configure velocity distribution
 		FVector StartVelocity(
 			InitializationDSL.Velocity.X,
 			InitializationDSL.Velocity.Y,
 			InitializationDSL.Velocity.Z
 		);
-		VelocityModule->StartVelocity = StartVelocity;
-	}
-
-	// Find or create rotation module
-	UParticleModuleRotation* RotationModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
-	{
-		if (UParticleModuleRotation* Rotation = Cast<UParticleModuleRotation>(Module))
+		
+		UDistributionVectorConstant* VelocityDistribution = CreateVectorConstantDistribution(VelocityModule, StartVelocity);
+		if (VelocityDistribution)
 		{
-			RotationModule = Rotation;
-			break;
+			SetRawDistributionVector(VelocityModule, TEXT("StartVelocity"), VelocityDistribution);
 		}
 	}
 
-	if (!RotationModule)
-	{
-		RotationModule = NewObject<UParticleModuleRotation>(Emitter);
-		if (RotationModule)
-		{
-			Emitter->SpawnModules.Add(RotationModule);
-		}
-	}
-
-	if (RotationModule)
-	{
-		RotationModule->StartRotation = FVector2D(InitializationDSL.Rotation.Min, InitializationDSL.Rotation.Max);
-	}
+	// Note: Rotation configuration is handled in ConfigureRenderModule
+	// since rotation is now part of FVFXDSLMesh in the Render configuration
 
 	return true;
 }
@@ -442,9 +619,16 @@ bool UCascadeSystemGenerator::ConfigureUpdateModule(
 		return false;
 	}
 
+	// Get or create first LOD level
+	UParticleLODLevel* LODLevel = GetOrCreateFirstLODLevel(Emitter, OutError);
+	if (!LODLevel)
+	{
+		return false;
+	}
+
 	// Find or create velocity over lifetime module for forces
 	UParticleModuleVelocityOverLifetime* VelocityOverLifetimeModule = nullptr;
-	for (UParticleModule* Module : Emitter->UpdateModules)
+	for (UParticleModule* Module : LODLevel->UpdateModules)
 	{
 		if (UParticleModuleVelocityOverLifetime* VelocityOverLifetime = Cast<UParticleModuleVelocityOverLifetime>(Module))
 		{
@@ -455,10 +639,10 @@ bool UCascadeSystemGenerator::ConfigureUpdateModule(
 
 	if (!VelocityOverLifetimeModule)
 	{
-		VelocityOverLifetimeModule = NewObject<UParticleModuleVelocityOverLifetime>(Emitter);
+		VelocityOverLifetimeModule = NewObject<UParticleModuleVelocityOverLifetime>(LODLevel);
 		if (VelocityOverLifetimeModule)
 		{
-			Emitter->UpdateModules.Add(VelocityOverLifetimeModule);
+			LODLevel->UpdateModules.Add(VelocityOverLifetimeModule);
 		}
 	}
 
@@ -470,7 +654,12 @@ bool UCascadeSystemGenerator::ConfigureUpdateModule(
 			UpdateDSL.Forces.Wind.Y,
 			UpdateDSL.Forces.Gravity + UpdateDSL.Forces.Wind.Z
 		);
-		VelocityOverLifetimeModule->VelOverLife = VelOverLife;
+		
+		UDistributionVectorConstant* VelOverLifeDistribution = CreateVectorConstantDistribution(VelocityOverLifetimeModule, VelOverLife);
+		if (VelOverLifeDistribution)
+		{
+			SetRawDistributionVector(VelocityOverLifetimeModule, TEXT("VelOverLife"), VelOverLifeDistribution);
+		}
 	}
 
 	// TODO: Configure drag and collision modules
@@ -490,16 +679,15 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 		return false;
 	}
 
-	// Find required module to set material
-	UParticleModuleRequired* RequiredModule = nullptr;
-	for (UParticleModule* Module : Emitter->RequiredModules)
+	// Get or create first LOD level
+	UParticleLODLevel* LODLevel = GetOrCreateFirstLODLevel(Emitter, OutError);
+	if (!LODLevel)
 	{
-		if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
-		{
-			RequiredModule = Required;
-			break;
-		}
+		return false;
 	}
+
+	// Get required module to set material
+	UParticleModuleRequired* RequiredModule = LODLevel->RequiredModule;
 
 	if (RequiredModule)
 	{
@@ -514,23 +702,9 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 			}
 		}
 
-		// Configure blend mode
-		if (RenderDSL.BlendMode.Equals(TEXT("Additive"), ESearchCase::IgnoreCase))
-		{
-			RequiredModule->BlendMode = BLEND_Additive;
-		}
-		else if (RenderDSL.BlendMode.Equals(TEXT("Translucent"), ESearchCase::IgnoreCase))
-		{
-			RequiredModule->BlendMode = BLEND_Translucent;
-		}
-		else if (RenderDSL.BlendMode.Equals(TEXT("Opaque"), ESearchCase::IgnoreCase))
-		{
-			RequiredModule->BlendMode = BLEND_Opaque;
-		}
-		else if (RenderDSL.BlendMode.Equals(TEXT("Modulate"), ESearchCase::IgnoreCase))
-		{
-			RequiredModule->BlendMode = BLEND_Modulate;
-		}
+		// Note: BlendMode property was removed from UParticleModuleRequired in UE 5.3
+		// Blend mode is now controlled by the material itself, not the particle module
+		// To set blend mode, configure it in the material asset
 
 		// Configure mesh if specified
 		if (RenderDSL.Mesh.bUseMesh)
@@ -567,9 +741,10 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 					}
 					
 					FString MeshError;
-					if (UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, MeshAsset, MeshError))
+					UStaticMesh* LoadedMesh = nullptr;
+					if (UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, LoadedMesh, MeshError))
 					{
-						// Mesh loaded successfully
+						MeshAsset = LoadedMesh;
 					}
 				}
 			}
@@ -597,33 +772,30 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 				}
 				
 				FString MeshError;
-				UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, MeshAsset, MeshError);
+				UStaticMesh* LoadedMesh = nullptr;
+				if (UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, LoadedMesh, MeshError))
+				{
+					MeshAsset = LoadedMesh;
+				}
 			}
 
 			// Apply mesh if loaded
 			if (MeshAsset)
 			{
 				// Use dynamic class loading for UE 5.3 compatibility
-				UClass* MeshTypeDataClass = FindObject<UClass>(ANY_PACKAGE, TEXT("ParticleModuleTypeDataMesh"));
+				UClass* MeshTypeDataClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.ParticleModuleTypeDataMesh"));
 				if (MeshTypeDataClass)
 				{
 					// Find or create TypeData mesh module
-					UParticleModule* MeshTypeData = nullptr;
-					for (UParticleModule* Module : Emitter->TypeDataModules)
+					// TODO: TypeDataModules was removed from UParticleEmitter in UE 5.3
+					// Type data modules are now stored in LODLevel->TypeDataModule
+					UParticleModuleTypeDataBase* MeshTypeData = LODLevel->TypeDataModule;
+					if (!MeshTypeData || !MeshTypeData->IsA(MeshTypeDataClass))
 					{
-						if (Module && Module->GetClass() == MeshTypeDataClass)
-						{
-							MeshTypeData = Module;
-							break;
-						}
-					}
-
-					if (!MeshTypeData)
-					{
-						MeshTypeData = NewObject<UParticleModule>(Emitter, MeshTypeDataClass);
+						MeshTypeData = NewObject<UParticleModuleTypeDataBase>(Emitter, MeshTypeDataClass);
 						if (MeshTypeData)
 						{
-							Emitter->TypeDataModules.Add(MeshTypeData);
+							LODLevel->TypeDataModule = MeshTypeData;
 						}
 					}
 
@@ -662,6 +834,50 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 				// Mesh requested but failed to load
 				UE_LOG(LogTemp, Warning, TEXT("Failed to load mesh for emitter. Mesh path: %s, Type: %s"), 
 					*RenderDSL.Mesh.MeshPath, *RenderDSL.Mesh.MeshType);
+			}
+		}
+	}
+
+	// Configure rotation from mesh configuration
+	if (RenderDSL.Mesh.Rotation.X != 0.0f || RenderDSL.Mesh.Rotation.Y != 0.0f || RenderDSL.Mesh.Rotation.Z != 0.0f)
+	{
+		// Find or create rotation module
+		UParticleModuleRotation* RotationModule = nullptr;
+		for (UParticleModule* Module : LODLevel->SpawnModules)
+		{
+			if (UParticleModuleRotation* Rotation = Cast<UParticleModuleRotation>(Module))
+			{
+				RotationModule = Rotation;
+				break;
+			}
+		}
+
+		if (!RotationModule)
+		{
+			RotationModule = NewObject<UParticleModuleRotation>(LODLevel);
+			if (RotationModule)
+			{
+				LODLevel->SpawnModules.Add(RotationModule);
+			}
+		}
+
+		if (RotationModule)
+		{
+			// Convert rotation from degrees to a rotation range
+			// UParticleModuleRotation uses StartRotation as FVector2D (min, max) in degrees
+			// For simplicity, use the Z component as the rotation value
+			float RotationZ = RenderDSL.Mesh.Rotation.Z;
+			FVector2D StartRotation(RotationZ, RotationZ);
+			
+			// Set rotation using reflection
+			FStructProperty* RotationProperty = FindFProperty<FStructProperty>(RotationModule->GetClass(), TEXT("StartRotation"));
+			if (RotationProperty)
+			{
+				FVector2D* RotationValue = RotationProperty->ContainerPtrToValuePtr<FVector2D>(RotationModule);
+				if (RotationValue)
+				{
+					*RotationValue = StartRotation;
+				}
 			}
 		}
 	}

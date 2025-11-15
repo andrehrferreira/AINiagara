@@ -82,8 +82,9 @@ public:
 	/**
 	 * Set the API key for authentication
 	 * @param InAPIKey The API key to use
+	 * @param bSaveToSettings Whether to save the API key to settings (default: true)
 	 */
-	void SetAPIKey(const FString& InAPIKey);
+	void SetAPIKey(const FString& InAPIKey, bool bSaveToSettings = true);
 
 	/**
 	 * Load API key from settings
@@ -205,6 +206,24 @@ private:
 		FHttpRequestPtr Request,
 		FHttpResponsePtr Response,
 		bool bWasSuccessful,
+		FOnGeminiResponse OnResponse,
+		FOnGeminiError OnError
+	);
+
+	/**
+	 * Handle HTTP request completion on game thread
+	 * @param bWasSuccessful Whether the request was successful
+	 * @param bResponseValid Whether the response is valid
+	 * @param ResponseCode HTTP response code
+	 * @param ResponseBody Response body text
+	 * @param OnResponse Response delegate
+	 * @param OnError Error delegate
+	 */
+	void HandleRequestCompleteOnGameThread(
+		bool bWasSuccessful,
+		bool bResponseValid,
+		int32 ResponseCode,
+		const FString& ResponseBody,
 		FOnGeminiResponse OnResponse,
 		FOnGeminiError OnError
 	);

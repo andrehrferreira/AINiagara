@@ -4,19 +4,32 @@
 #include "Core/VFXDSLParser.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
 #include "Particles/ParticleModule.h"
 #include "Particles/ParticleModuleRequired.h"
 // Note: ParticleModuleSpawn may not exist in all UE versions, use reflection
-#include "Particles/ParticleModuleSize.h"
-#include "Particles/ParticleModuleColor.h"
-#include "Particles/ParticleModuleVelocity.h"
-#include "Particles/ParticleModuleRotation.h"
-#include "Particles/ParticleModuleVelocityOverLifetime.h"
+#include "Particles/Size/ParticleModuleSize.h"
+#include "Particles/Color/ParticleModuleColor.h"
+#include "Particles/Velocity/ParticleModuleVelocity.h"
+#include "Particles/Velocity/ParticleModuleVelocityOverLifetime.h"
+#include "Particles/Rotation/ParticleModuleRotation.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInstance.h"
 #include "UObject/UObjectGlobals.h"
 #include "UObject/Class.h"
 #include "UObject/PropertyAccessUtil.h"
 #include "UObject/UnrealType.h"
+
+// Helper function to get first LOD level
+static UParticleLODLevel* GetFirstLODLevel(UParticleEmitter* Emitter)
+{
+	if (!Emitter || Emitter->LODLevels.Num() == 0)
+	{
+		return nullptr;
+	}
+	return Emitter->LODLevels[0];
+}
 
 bool UCascadeSystemToDSLConverter::ConvertSystemToDSL(
 	UParticleSystem* ParticleSystem,
@@ -32,7 +45,25 @@ bool UCascadeSystemToDSLConverter::ConvertSystemToDSL(
 	// Initialize DSL with defaults
 	OutDSL = FVFXDSL();
 	OutDSL.Effect.Type = EVFXEffectType::Cascade;
-	OutDSL.Effect.Duration = ParticleSystem->Duration;
+	// TODO: UParticleSystem doesn't have a Duration property in UE 5.3
+	// Duration is stored in each emitter's RequiredModule->EmitterDuration
+	// Extract duration from first emitter's RequiredModule if available
+	if (ParticleSystem->Emitters.Num() > 0 && ParticleSystem->Emitters[0] && ParticleSystem->Emitters[0]->LODLevels.Num() > 0)
+	{
+		UParticleLODLevel* FirstLOD = ParticleSystem->Emitters[0]->LODLevels[0];
+		if (FirstLOD && FirstLOD->RequiredModule)
+		{
+			OutDSL.Effect.Duration = FirstLOD->RequiredModule->EmitterDuration;
+		}
+		else
+		{
+			OutDSL.Effect.Duration = 5.0f; // Default
+		}
+	}
+	else
+	{
+		OutDSL.Effect.Duration = 5.0f; // Default
+	}
 	OutDSL.Effect.bLooping = false; // Default, as this is not directly stored in UParticleSystem
 
 	// Get emitters from system
@@ -146,9 +177,17 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 	UParticleModule* SpawnModule = nullptr;
 	UClass* SpawnModuleClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.ParticleModuleSpawn"));
 	
+	// Get first LOD level
+	UParticleLODLevel* LODLevel = GetFirstLODLevel(Emitter);
+	if (!LODLevel)
+	{
+		OutError = TEXT("Emitter has no LOD levels");
+		return false;
+	}
+
 	if (SpawnModuleClass)
 	{
-		for (UParticleModule* Module : Emitter->SpawnModules)
+		for (UParticleModule* Module : LODLevel->SpawnModules)
 		{
 			if (Module && Module->IsA(SpawnModuleClass))
 			{
@@ -160,7 +199,7 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 	else
 	{
 		// Fallback: find any module with "Spawn" in name
-		for (UParticleModule* Module : Emitter->SpawnModules)
+		for (UParticleModule* Module : LODLevel->SpawnModules)
 		{
 			if (Module && Module->GetClass()->GetName().Contains(TEXT("Spawn")))
 			{
@@ -173,7 +212,7 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 	if (SpawnModule)
 	{
 		// Extract spawn rate using reflection
-		FStructProperty* RateProperty = FindField<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
+		FStructProperty* RateProperty = FindFProperty<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
 		if (RateProperty)
 		{
 			FVector2D* RateValue = RateProperty->ContainerPtrToValuePtr<FVector2D>(SpawnModule);
@@ -196,7 +235,7 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 		}
 
 		// Extract bursts using reflection
-		FArrayProperty* BurstListProperty = FindField<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
+		FArrayProperty* BurstListProperty = FindFProperty<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
 		if (BurstListProperty)
 		{
 			FScriptArrayHelper ArrayHelper(BurstListProperty, BurstListProperty->ContainerPtrToValuePtr<void>(SpawnModule));
@@ -208,8 +247,8 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 				
 				if (BurstStructProperty && FirstBurstData)
 				{
-					FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
-					FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+					FIntProperty* CountProperty = FindFProperty<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+					FFloatProperty* TimeProperty = FindFProperty<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
 					
 					if (CountProperty && TimeProperty)
 					{
@@ -264,9 +303,17 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 		return false;
 	}
 
+	// Get first LOD level
+	UParticleLODLevel* LODLevel = GetFirstLODLevel(Emitter);
+	if (!LODLevel)
+	{
+		OutError = TEXT("Emitter has no LOD levels");
+		return false;
+	}
+
 	// Extract size
 	UParticleModuleSize* SizeModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleSize* Size = Cast<UParticleModuleSize>(Module))
 		{
@@ -277,7 +324,8 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 
 	if (SizeModule)
 	{
-		FVector2D StartSize = SizeModule->StartSize.GetValue();
+		// FRawDistributionVector returns FVector, extract X and Y components
+		FVector StartSize = SizeModule->StartSize.GetValue(0.0f);
 		OutInitialization.Size.Min = StartSize.X;
 		OutInitialization.Size.Max = StartSize.Y;
 	}
@@ -289,7 +337,7 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 
 	// Extract color
 	UParticleModuleColor* ColorModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleColor* Color = Cast<UParticleModuleColor>(Module))
 		{
@@ -316,7 +364,7 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 
 	// Extract velocity
 	UParticleModuleVelocity* VelocityModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleVelocity* Velocity = Cast<UParticleModuleVelocity>(Module))
 		{
@@ -341,7 +389,7 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 
 	// Extract rotation
 	UParticleModuleRotation* RotationModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	for (UParticleModule* Module : LODLevel->SpawnModules)
 	{
 		if (UParticleModuleRotation* Rotation = Cast<UParticleModuleRotation>(Module))
 		{
@@ -350,6 +398,10 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 		}
 	}
 
+	// TODO: Rotation was removed from FVFXDSLInitialization in UE 5.3
+	// Rotation is now part of FVFXDSLMesh in the Render configuration
+	// This code needs to be refactored to extract rotation from mesh configuration
+	/*
 	if (RotationModule)
 	{
 		FVector2D StartRotation = RotationModule->StartRotation.GetValue();
@@ -361,6 +413,7 @@ bool UCascadeSystemToDSLConverter::ExtractInitializationConfig(
 		OutInitialization.Rotation.Min = 0.0f;
 		OutInitialization.Rotation.Max = 360.0f;
 	}
+	*/
 
 	return true;
 }
@@ -376,9 +429,17 @@ bool UCascadeSystemToDSLConverter::ExtractUpdateConfig(
 		return false;
 	}
 
+	// Get first LOD level
+	UParticleLODLevel* LODLevel = GetFirstLODLevel(Emitter);
+	if (!LODLevel)
+	{
+		OutError = TEXT("Emitter has no LOD levels");
+		return false;
+	}
+
 	// Extract velocity over lifetime (forces)
 	UParticleModuleVelocityOverLifetime* VelocityOverLifetimeModule = nullptr;
-	for (UParticleModule* Module : Emitter->UpdateModules)
+	for (UParticleModule* Module : LODLevel->UpdateModules)
 	{
 		if (UParticleModuleVelocityOverLifetime* VelocityOverLifetime = Cast<UParticleModuleVelocityOverLifetime>(Module))
 		{
@@ -421,16 +482,16 @@ bool UCascadeSystemToDSLConverter::ExtractRenderConfig(
 		return false;
 	}
 
-	// Find required module for material and blend mode
-	UParticleModuleRequired* RequiredModule = nullptr;
-	for (UParticleModule* Module : Emitter->RequiredModules)
+	// Get first LOD level
+	UParticleLODLevel* LODLevel = GetFirstLODLevel(Emitter);
+	if (!LODLevel)
 	{
-		if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
-		{
-			RequiredModule = Required;
-			break;
-		}
+		OutError = TEXT("Emitter has no LOD levels");
+		return false;
 	}
+
+	// Get required module for material and blend mode
+	UParticleModuleRequired* RequiredModule = LODLevel->RequiredModule;
 
 	if (RequiredModule)
 	{
@@ -438,30 +499,67 @@ bool UCascadeSystemToDSLConverter::ExtractRenderConfig(
 		if (RequiredModule->Material)
 		{
 			OutRender.Material = RequiredModule->Material->GetPathName();
+			
+			// Extract blend mode from material (BlendMode was removed from UParticleModuleRequired in UE 5.3)
+			if (UMaterial* MaterialAsset = Cast<UMaterial>(RequiredModule->Material))
+			{
+				switch (MaterialAsset->BlendMode)
+				{
+				case BLEND_Opaque:
+					OutRender.BlendMode = TEXT("Opaque");
+					break;
+				case BLEND_Translucent:
+					OutRender.BlendMode = TEXT("Translucent");
+					break;
+				case BLEND_Additive:
+					OutRender.BlendMode = TEXT("Additive");
+					break;
+				case BLEND_Modulate:
+					OutRender.BlendMode = TEXT("Modulate");
+					break;
+				default:
+					OutRender.BlendMode = TEXT("Translucent");
+					break;
+				}
+			}
+			else if (UMaterialInstance* MaterialInstance = Cast<UMaterialInstance>(RequiredModule->Material))
+			{
+				// For material instances, get blend mode from parent material
+				if (UMaterial* ParentMaterial = MaterialInstance->GetMaterial())
+				{
+					switch (ParentMaterial->BlendMode)
+					{
+					case BLEND_Opaque:
+						OutRender.BlendMode = TEXT("Opaque");
+						break;
+					case BLEND_Translucent:
+						OutRender.BlendMode = TEXT("Translucent");
+						break;
+					case BLEND_Additive:
+						OutRender.BlendMode = TEXT("Additive");
+						break;
+					case BLEND_Modulate:
+						OutRender.BlendMode = TEXT("Modulate");
+						break;
+					default:
+						OutRender.BlendMode = TEXT("Translucent");
+						break;
+					}
+				}
+				else
+				{
+					OutRender.BlendMode = TEXT("Translucent");
+				}
+			}
+			else
+			{
+				OutRender.BlendMode = TEXT("Translucent");
+			}
 		}
 		else
 		{
 			OutRender.Material = TEXT("");
-		}
-
-		// Extract blend mode
-		switch (RequiredModule->BlendMode)
-		{
-		case BLEND_Opaque:
-			OutRender.BlendMode = TEXT("Opaque");
-			break;
-		case BLEND_Translucent:
 			OutRender.BlendMode = TEXT("Translucent");
-			break;
-		case BLEND_Additive:
-			OutRender.BlendMode = TEXT("Additive");
-			break;
-		case BLEND_Modulate:
-			OutRender.BlendMode = TEXT("Modulate");
-			break;
-		default:
-			OutRender.BlendMode = TEXT("Translucent");
-			break;
 		}
 	}
 	else

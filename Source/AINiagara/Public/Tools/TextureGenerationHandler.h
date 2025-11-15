@@ -158,6 +158,15 @@ public:
 	 */
 	static bool DecodeBase64(const FString& Base64String, TArray<uint8>& OutBytes);
 
+	/**
+	 * Validate texture generation request
+	 * @param Request Request to validate
+	 * @param OutError Error message if invalid
+	 * @return True if request is valid
+	 * Note: Not exposed to Blueprint because FTextureGenerationRequest is not supported by Blueprint
+	 */
+	static bool ValidateRequest(const FTextureGenerationRequest& Request, FString& OutError);
+
 private:
 	/**
 	 * Generate a single texture frame
@@ -170,13 +179,5 @@ private:
 		int32 FrameIndex,
 		FOnTextureGenerated OnComplete
 	);
-
-	/**
-	 * Validate texture generation request
-	 * @param Request Request to validate
-	 * @param OutError Error message if invalid
-	 * @return True if request is valid
-	 */
-	static bool ValidateRequest(const FTextureGenerationRequest& Request, FString& OutError);
 };
 

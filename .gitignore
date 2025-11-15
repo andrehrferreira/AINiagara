@@ -113,4 +113,6 @@ tmp/
 *.ubulk
 *.uptnl
 
-# Note: *.uplugin should NOT be ignored as it's the plugin definition file
+# AINiagara plugin files
+AINiagaraFXPlugin/
+AINiagaraFXPluginUI/

@@ -5,6 +5,7 @@
 #include "NiagaraEmitter.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
 #include "Particles/ParticleModuleRequired.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
@@ -65,17 +66,22 @@ bool UTextureMaterialHelper::ApplyTextureToCascadeEmitter(
 		return false;
 	}
 
-	// Find the Required module (contains material)
-	UParticleModuleRequired* RequiredModule = nullptr;
-	for (UParticleModule* Module : Emitter->RequiredModules)
+	// Get the first LOD level (or create one if none exists)
+	if (Emitter->LODLevels.Num() == 0)
 	{
-		if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
-		{
-			RequiredModule = Required;
-			break;
-		}
+		OutError = TEXT("Emitter has no LOD levels");
+		return false;
 	}
 
+	UParticleLODLevel* LODLevel = Emitter->LODLevels[0];
+	if (!LODLevel)
+	{
+		OutError = TEXT("First LOD level is null");
+		return false;
+	}
+
+	// Get the Required module (contains material)
+	UParticleModuleRequired* RequiredModule = LODLevel->RequiredModule;
 	if (!RequiredModule)
 	{
 		OutError = TEXT("Could not find Required module in Cascade emitter");

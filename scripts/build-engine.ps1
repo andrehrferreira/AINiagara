@@ -52,7 +52,7 @@ if ($ProjectPath -and (Test-Path $ProjectPath)) {
     $BuildCommand = "& `"$BuildBat`" ${TargetName} ${Platform} ${Configuration} -Project=`"${ProjectPath}`" -WaitMutex -FromMsBuild"
 } else {
     Write-Host "Building UnrealEditor with plugin..." -ForegroundColor Green
-    $BuildCommand = "& `"$BuildBat`" UnrealEditor ${Platform} ${Configuration} `"${EnginePath}`" -WaitMutex"
+    $BuildCommand = "& `"$BuildBat`" UnrealEditor ${Platform} ${Configuration} -WaitMutex"
 }
 
 Write-Host ""
@@ -150,8 +150,18 @@ Write-Host "Executing build command..." -ForegroundColor Yellow
 Write-Host ""
 
 try {
-    # Execute build and capture output
-    $output = Invoke-Expression $BuildCommand 2>&1 | Tee-Object -Variable fullOutput
+    # Change to engine directory for build
+    $OriginalLocation = Get-Location
+    Push-Location $EnginePath
+    
+    try {
+        # Execute build and capture output
+        $output = Invoke-Expression $BuildCommand 2>&1 | Tee-Object -Variable fullOutput
+    }
+    finally {
+        # Restore original location
+        Pop-Location
+    }
     
     # Write all output
     $fullOutput | ForEach-Object {

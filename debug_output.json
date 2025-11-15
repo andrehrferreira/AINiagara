@@ -1,0 +1,15 @@
+{
+	"pluginName": "AINiagara",
+	"lastUpdate": "2025.11.15-01.51.10",
+	"isMonitoring": true,
+	"logFilePath": "",
+	"logFileSize": 0,
+	"liveCoding":
+	{
+		"status": "unknown",
+		"lastEvent": "",
+		"lastEventTime": ""
+	},
+	"recentMessages": [],
+	"messageCount": 0
+}

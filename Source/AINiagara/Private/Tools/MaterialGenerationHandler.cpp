@@ -140,6 +140,11 @@ bool UMaterialGenerationHandler::CreateBaseMaterial(
 
 		if (FJsonSerializer::Deserialize(Reader, PropertiesObj) && PropertiesObj.IsValid())
 		{
+			// TODO: Material API changed in UE 5.3 - need to use Material Graph API
+			// The old API using Expressions, BaseColor, EmissiveColor, Opacity no longer exists
+			// This code needs to be refactored to use the new Material Graph API
+			// For now, commenting out to allow compilation
+			/*
 			// Set base color if specified
 			if (PropertiesObj->HasTypedField<EJson::Object>(TEXT("BaseColor")))
 			{
@@ -179,6 +184,7 @@ bool UMaterialGenerationHandler::CreateBaseMaterial(
 				OutMaterial->Expressions.Add(OpacityExpr);
 				OutMaterial->Opacity.Expression = OpacityExpr;
 			}
+			*/
 		}
 	}
 

@@ -30,6 +30,12 @@ public:
 	DECLARE_DELEGATE(FOnDialogCancelled);
 	FOnDialogCancelled OnDialogCancelled;
 
+	/** Check if widget is still valid */
+	bool IsValid() const { return bIsValid; }
+
+	/** Mark widget as invalid (called when widget is being destroyed) */
+	void Invalidate() { bIsValid = false; }
+
 private:
 	/** API key input field */
 	TSharedPtr<SEditableTextBox> APIKeyInputBox;
@@ -48,6 +54,12 @@ private:
 
 	/** Current API key being tested */
 	FString CurrentAPIKey;
+
+	/** Flag to track if widget is still valid */
+	bool bIsValid;
+
+	/** Weak pointer to self for safe callbacks */
+	TWeakPtr<SAINiagaraAPIKeyDialog> WeakSelf;
 
 	/**
 	 * Handle test button click

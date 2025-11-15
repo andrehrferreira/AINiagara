@@ -10,6 +10,7 @@
 #include "Misc/DateTime.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/Package.h"
+#include "UObject/ObjectSaveContext.h"
 #include "NiagaraSystem.h"
 
 UConversationHistoryManager::UConversationHistoryManager(const FObjectInitializer& ObjectInitializer)

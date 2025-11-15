@@ -9,7 +9,7 @@
 #include "Core/NiagaraSystemToDSLConverter.h"
 #include "Core/CascadeSystemGenerator.h"
 #include "Core/CascadeSystemToDSLConverter.h"
-#include "Core/VFXDSLValidator.h"
+#include "Core/VFXDSLParser.h"
 #include "Core/PreviewSystemManager.h"
 #include "Core/VFXDSLDiff.h"
 #include "Tools/TextureGenerationHandler.h"
@@ -19,6 +19,7 @@
 #include "Tools/MeshDetectionHandler.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleLODLevel.h"
 #include "Particles/ParticleModuleRequired.h"
 #include "Materials/Material.h"
 #include "Materials/MaterialInterface.h"
@@ -1459,42 +1460,19 @@ void SAINiagaraChatWidget::ProcessMaterialGenerationTool(TSharedPtr<FJsonObject>
 						// Apply material to all emitters in Cascade system
 						for (UParticleEmitter* Emitter : CascadePreview->Emitters)
 						{
-							if (Emitter)
+							if (Emitter && Emitter->LODLevels.Num() > 0)
 							{
-								// Find required module
-								UParticleModuleRequired* RequiredModule = nullptr;
-								for (UParticleModule* Module : Emitter->RequiredModules)
-								{
-									if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
-									{
-										RequiredModule = Required;
-										break;
-									}
-								}
+								// Get first LOD level and required module
+								UParticleLODLevel* LODLevel = Emitter->LODLevels[0];
+								UParticleModuleRequired* RequiredModule = LODLevel ? LODLevel->RequiredModule : nullptr;
 
 								if (RequiredModule)
 								{
 									RequiredModule->Material = Result.Material;
 									
-									// Set blend mode from material
-									if (UMaterial* MaterialAsset = Cast<UMaterial>(Result.Material))
-									{
-										switch (MaterialAsset->BlendMode)
-										{
-										case BLEND_Opaque:
-											RequiredModule->BlendMode = BLEND_Opaque;
-											break;
-										case BLEND_Translucent:
-											RequiredModule->BlendMode = BLEND_Translucent;
-											break;
-										case BLEND_Additive:
-											RequiredModule->BlendMode = BLEND_Additive;
-											break;
-										case BLEND_Modulate:
-											RequiredModule->BlendMode = BLEND_Modulate;
-											break;
-										}
-									}
+									// TODO: BlendMode property was removed from UParticleModuleRequired in UE 5.3
+									// Blend mode is now controlled by the material itself
+									// The material's blend mode will be used automatically
 									
 									bMaterialApplied = true;
 								}

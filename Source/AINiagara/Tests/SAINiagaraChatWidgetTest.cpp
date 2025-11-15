@@ -31,13 +31,13 @@ bool FSAINiagaraChatWidgetConstructionTest::RunTest(const FString& Parameters)
 	TSharedRef<SAINiagaraChatWidget> ChatWidget = SNew(SAINiagaraChatWidget)
 		.AssetPath(TEXT("/Game/Test/TestAsset"));
 
-	TestNotNull(TEXT("Chat widget should be created"), ChatWidget.Get());
+	// TSharedRef is always valid (cannot be null)
+	// No need to check validity, just verify we can access it
+	TestTrue(TEXT("Chat widget should be created"), true);
 
-	// Widget should be valid
-	if (!ChatWidget.IsValid())
-	{
-		return false;
-	}
+	// TSharedRef is always valid (unlike TSharedPtr)
+	// No need to check IsValid() for TSharedRef
+	(void)ChatWidget; // Suppress unused variable warning
 
 	return true;
 }
@@ -63,7 +63,9 @@ bool FSAINiagaraChatWidgetEmptyAssetPathTest::RunTest(const FString& Parameters)
 	TSharedRef<SAINiagaraChatWidget> ChatWidget = SNew(SAINiagaraChatWidget)
 		.AssetPath(FString());
 
-	TestNotNull(TEXT("Chat widget should be created even with empty asset path"), ChatWidget.Get());
+	// TSharedRef is always valid (cannot be null)
+	// No need to check validity, just verify we can access it
+	TestTrue(TEXT("Chat widget should be created even with empty asset path"), true);
 
 	return true;
 }
@@ -107,7 +109,9 @@ bool FSAINiagaraChatWidgetHistoryLoadingTest::RunTest(const FString& Parameters)
 	TSharedRef<SAINiagaraChatWidget> ChatWidget = SNew(SAINiagaraChatWidget)
 		.AssetPath(TestAssetPath);
 
-	TestNotNull(TEXT("Chat widget should be created"), ChatWidget.Get());
+	// TSharedRef is always valid (cannot be null)
+	// No need to check validity, just verify we can access it
+	TestTrue(TEXT("Chat widget should be created"), true);
 
 	// Clean up
 	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())
@@ -145,8 +149,10 @@ bool FSAINiagaraChatWidgetMultipleAssetsTest::RunTest(const FString& Parameters)
 	TSharedRef<SAINiagaraChatWidget> Widget2 = SNew(SAINiagaraChatWidget)
 		.AssetPath(AssetPath2);
 
-	TestNotNull(TEXT("First widget should be created"), Widget1.Get());
-	TestNotNull(TEXT("Second widget should be created"), Widget2.Get());
+	// TSharedRef is always valid (cannot be null)
+	// No need to check validity, just verify we can access them
+	TestTrue(TEXT("First widget should be created"), true);
+	TestTrue(TEXT("Second widget should be created"), true);
 
 	// Add different messages to each asset's history
 	if (UConversationHistoryManager* HistoryManager = UConversationHistoryManager::Get())

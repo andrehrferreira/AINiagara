@@ -54,11 +54,25 @@ void FAINiagaraChatWindow::OpenChatWindow()
 	FSlateApplication::Get().AddWindow(ChatWindow.ToSharedRef(), true);
 }
 
-void FAINiagaraChatWindow::ShowAPIKeyDialog()
+void FAINiagaraChatWindow::ShowAPIKeyDialog(FSimpleDelegate OnConfiguredCallback)
 {
 	const FVector2D DialogSize(550.0f, 300.0f);
 	const FVector2D DialogPosition = FSlateApplication::Get().GetCursorPos();
 
+	// Use provided callback if available, otherwise default to opening chat window
+	FSimpleDelegate FinalCallback = OnConfiguredCallback.IsBound() 
+		? OnConfiguredCallback 
+		: FSimpleDelegate::CreateLambda([]()
+		{
+			// After API key is configured, open chat window (default behavior)
+			FAINiagaraChatWindow::OpenChatWindow();
+		});
+
+	// Create dialog widget first
+	TSharedRef<SAINiagaraAPIKeyDialog> DialogWidget = SNew(SAINiagaraAPIKeyDialog)
+		.OnAPIKeyConfigured(FinalCallback);
+
+	// Create window with close callback to invalidate widget
 	TSharedRef<SWindow> DialogWindow = SNew(SWindow)
 		.Title(NSLOCTEXT("AINiagara", "APIKeyDialogWindowTitle", "AINiagara - API Key Configuration"))
 		.ClientSize(DialogSize)
@@ -67,13 +81,13 @@ void FAINiagaraChatWindow::ShowAPIKeyDialog()
 		.AutoCenter(EAutoCenter::None)
 		.SupportsMinimize(false)
 		.SupportsMaximize(false)
+		.OnWindowClosed_Lambda([DialogWidget](const TSharedRef<SWindow>&)
+		{
+			// Invalidate widget when window is closed
+			DialogWidget->Invalidate();
+		})
 		[
-			SNew(SAINiagaraAPIKeyDialog)
-			.OnAPIKeyConfigured(FSimpleDelegate::CreateLambda([]()
-			{
-				// After API key is configured, open chat window
-				FAINiagaraChatWindow::OpenChatWindow();
-			}))
+			DialogWidget
 		];
 
 	FSlateApplication::Get().AddModalWindow(DialogWindow, nullptr);
@@ -105,6 +119,8 @@ TSharedRef<SWidget> FAINiagaraChatWindow::CreateChatWidget()
 	// For now, pass empty string - widget will try to detect it or use default
 	FString CurrentAssetPath = TEXT("");
 	
+	// Check if API key is configured - if not, the widget will handle showing the dialog
+	// For tab-based usage, we create the widget anyway and let it handle the API key check
 	return SNew(SAINiagaraChatWidget)
 		.AssetPath(CurrentAssetPath);
 }

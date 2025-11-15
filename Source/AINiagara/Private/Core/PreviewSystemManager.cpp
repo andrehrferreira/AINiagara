@@ -11,7 +11,7 @@
 #include "HAL/PlatformTime.h"
 #include "Editor.h"
 #include "Toolkits/AssetEditorToolkit.h"
-#include "AssetEditorSubsystem.h"
+#include "Subsystems/AssetEditorSubsystem.h"
 #include "Editor/EditorEngine.h"
 
 UPreviewSystemManager* UPreviewSystemManager::Get()
@@ -374,8 +374,7 @@ void UPreviewSystemManager::UpdateEditorViewport()
 	if (NiagaraPreview)
 	{
 		// Find currently open Niagara editor
-		TArray<UObject*> AllAssets;
-		AssetEditorSubsystem->GetAllEditedAssets(AllAssets);
+		TArray<UObject*> AllAssets = AssetEditorSubsystem->GetAllEditedAssets();
 		
 		bool bFoundNiagaraEditor = false;
 		for (UObject* Asset : AllAssets)
@@ -408,8 +407,7 @@ void UPreviewSystemManager::UpdateEditorViewport()
 	if (CascadePreview)
 	{
 		// Find currently open Cascade editor
-		TArray<UObject*> AllAssets;
-		AssetEditorSubsystem->GetAllEditedAssets(AllAssets);
+		TArray<UObject*> AllAssets = AssetEditorSubsystem->GetAllEditedAssets();
 		
 		bool bFoundCascadeEditor = false;
 		for (UObject* Asset : AllAssets)
