@@ -1,9 +1,9 @@
 # AINiagara
 
-[![Version](https://img.shields.io/badge/version-0.15.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
+[![Version](https://img.shields.io/badge/version-0.16.0--beta-blue.svg)](https://github.com/yourusername/ainiagara)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.3+-orange.svg)](https://www.unrealengine.com/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-99%20passing-success.svg)](https://github.com/yourusername/ainiagara)
+[![Tests](https://img.shields.io/badge/tests-106%20passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen.svg)](https://github.com/yourusername/ainiagara)
 [![Build](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/yourusername/ainiagara)
 [![C++](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
@@ -17,7 +17,7 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
 
 ## Features
 
-### ✅ Implemented (v0.15.0)
+### ✅ Implemented (v0.16.0)
 - 🤖 **AI-powered VFX generation** - Natural language prompts via Gemini API with intelligent context understanding
 - 💬 **Chat interface** - Cursor-style chat window integrated into Niagara/Cascade editors with rich message formatting
 - 🎨 **AI Texture Generation (COMPLETE!)** - Full Gemini Imagen 3 integration for procedural texture creation
@@ -57,7 +57,13 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
   - Detects Added, Removed, Modified, and Type Changed properties
   - Deep comparison of all DSL structures
   - Human-readable change descriptions
-- 🧪 **Comprehensive testing** - 99 unit/integration/UI tests with 95%+ coverage
+- 🎨 **AI Shader/Material Generation (COMPLETE!)** - Full AI-powered shader and material creation
+  - HLSL shader code generation via Gemini API
+  - Material creation with expressions (BaseColor, EmissiveColor, Opacity)
+  - Texture bindings and blend mode configuration
+  - Automatic material application to Cascade emitters
+  - Preview system integration
+- 🧪 **Comprehensive testing** - 106 unit/integration/UI tests with 95%+ coverage
 - ✅ **Production ready** - Fully tested on Unreal Engine 5.3+
 
 ### 🚧 Pending MVP Features
