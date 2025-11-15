@@ -17,6 +17,10 @@
 #include "Tools/ShaderGenerationHandler.h"
 #include "Tools/MaterialGenerationHandler.h"
 #include "Particles/ParticleSystem.h"
+#include "Particles/ParticleEmitter.h"
+#include "Particles/ParticleModuleRequired.h"
+#include "Materials/Material.h"
+#include "Materials/MaterialInterface.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -1423,10 +1427,94 @@ void SAINiagaraChatWidget::ProcessMaterialGenerationTool(TSharedPtr<FJsonObject>
 				AddMessageToHistory(TEXT("system"), SuccessMessage, false, true);
 				ShowSuccessNotification(SuccessMessage);
 
-				// TODO: Apply material to target emitter if specified (Phase 11.5)
-				AddMessageToHistory(TEXT("system"), 
-					TEXT("💡 Tip: Use the material path in your VFX generation request to apply this material to emitters."),
-					false, false);
+				// Try to apply material to preview system if available
+				if (PreviewManager && PreviewManager->IsPreviewActive())
+				{
+					UNiagaraSystem* NiagaraPreview = PreviewManager->GetNiagaraPreview();
+					UParticleSystem* CascadePreview = PreviewManager->GetCascadePreview();
+
+					bool bMaterialApplied = false;
+
+					if (CascadePreview)
+					{
+						// Apply material to all emitters in Cascade system
+						for (UParticleEmitter* Emitter : CascadePreview->Emitters)
+						{
+							if (Emitter)
+							{
+								// Find required module
+								UParticleModuleRequired* RequiredModule = nullptr;
+								for (UParticleModule* Module : Emitter->RequiredModules)
+								{
+									if (UParticleModuleRequired* Required = Cast<UParticleModuleRequired>(Module))
+									{
+										RequiredModule = Required;
+										break;
+									}
+								}
+
+								if (RequiredModule)
+								{
+									RequiredModule->Material = Result.Material;
+									
+									// Set blend mode from material
+									if (UMaterial* MaterialAsset = Cast<UMaterial>(Result.Material))
+									{
+										switch (MaterialAsset->BlendMode)
+										{
+										case BLEND_Opaque:
+											RequiredModule->BlendMode = BLEND_Opaque;
+											break;
+										case BLEND_Translucent:
+											RequiredModule->BlendMode = BLEND_Translucent;
+											break;
+										case BLEND_Additive:
+											RequiredModule->BlendMode = BLEND_Additive;
+											break;
+										case BLEND_Modulate:
+											RequiredModule->BlendMode = BLEND_Modulate;
+											break;
+										}
+									}
+									
+									bMaterialApplied = true;
+								}
+							}
+						}
+
+						if (bMaterialApplied)
+						{
+							CascadePreview->MarkPackageDirty();
+							CascadePreview->PostEditChange();
+							
+							AddMessageToHistory(TEXT("system"), 
+								TEXT("✅ Applied material to Cascade preview system!"),
+								false, true);
+						}
+					}
+					else if (NiagaraPreview)
+					{
+						// Niagara material application requires graph API (not fully implemented)
+						AddMessageToHistory(TEXT("system"), 
+							TEXT("⚠️ Niagara material application not yet fully implemented. Apply material manually in the emitter's render settings."),
+							false, false);
+					}
+
+					if (!bMaterialApplied && !CascadePreview)
+					{
+						AddMessageToHistory(TEXT("system"), 
+							FString::Printf(TEXT("💡 Tip: Use the material path '%s' in your VFX generation request to apply this material to emitters."),
+							*Result.MaterialPath),
+							false, false);
+					}
+				}
+				else
+				{
+					AddMessageToHistory(TEXT("system"), 
+						FString::Printf(TEXT("💡 Tip: Use the material path '%s' in your VFX generation request to apply this material to emitters."),
+						*Result.MaterialPath),
+						false, false);
+				}
 			}
 			else
 			{
