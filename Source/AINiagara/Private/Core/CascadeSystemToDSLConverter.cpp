@@ -6,13 +6,17 @@
 #include "Particles/ParticleEmitter.h"
 #include "Particles/ParticleModule.h"
 #include "Particles/ParticleModuleRequired.h"
-#include "Particles/ParticleModuleSpawn.h"
+// Note: ParticleModuleSpawn may not exist in all UE versions, use reflection
 #include "Particles/ParticleModuleSize.h"
 #include "Particles/ParticleModuleColor.h"
 #include "Particles/ParticleModuleVelocity.h"
 #include "Particles/ParticleModuleRotation.h"
 #include "Particles/ParticleModuleVelocityOverLifetime.h"
 #include "Materials/MaterialInterface.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/Class.h"
+#include "UObject/PropertyAccessUtil.h"
+#include "UObject/UnrealType.h"
 
 bool UCascadeSystemToDSLConverter::ConvertSystemToDSL(
 	UParticleSystem* ParticleSystem,
@@ -138,40 +142,97 @@ bool UCascadeSystemToDSLConverter::ExtractSpawnerConfig(
 		return false;
 	}
 
-	// Find spawn module
-	UParticleModuleSpawn* SpawnModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	// Find spawn module using dynamic class loading
+	UParticleModule* SpawnModule = nullptr;
+	UClass* SpawnModuleClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.ParticleModuleSpawn"));
+	
+	if (SpawnModuleClass)
 	{
-		if (UParticleModuleSpawn* Spawn = Cast<UParticleModuleSpawn>(Module))
+		for (UParticleModule* Module : Emitter->SpawnModules)
 		{
-			SpawnModule = Spawn;
-			break;
+			if (Module && Module->IsA(SpawnModuleClass))
+			{
+				SpawnModule = Module;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Fallback: find any module with "Spawn" in name
+		for (UParticleModule* Module : Emitter->SpawnModules)
+		{
+			if (Module && Module->GetClass()->GetName().Contains(TEXT("Spawn")))
+			{
+				SpawnModule = Module;
+				break;
+			}
 		}
 	}
 
 	if (SpawnModule)
 	{
-		// Extract spawn rate
-		if (SpawnModule->Rate.GetValue() > 0.0f)
+		// Extract spawn rate using reflection
+		FStructProperty* RateProperty = FindField<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
+		if (RateProperty)
 		{
-			OutSpawners.Rate.SpawnRate = SpawnModule->Rate.GetValue();
+			FVector2D* RateValue = RateProperty->ContainerPtrToValuePtr<FVector2D>(SpawnModule);
+			if (RateValue)
+			{
+				float Rate = RateValue->X;
+				if (Rate > 0.0f)
+				{
+					OutSpawners.Rate.SpawnRate = Rate;
+				}
+				else
+				{
+					OutSpawners.Rate.SpawnRate = 10.0f; // Default
+				}
+			}
 		}
 		else
 		{
 			OutSpawners.Rate.SpawnRate = 10.0f; // Default
 		}
 
-		// Extract bursts
-		if (SpawnModule->BurstList.Num() > 0)
+		// Extract bursts using reflection
+		FArrayProperty* BurstListProperty = FindField<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
+		if (BurstListProperty)
 		{
-			const FParticleBurst& FirstBurst = SpawnModule->BurstList[0];
-			OutSpawners.Burst.Count = FirstBurst.Count;
-			OutSpawners.Burst.Time = FirstBurst.Time;
-
-			// Extract additional bursts
-			for (int32 i = 1; i < SpawnModule->BurstList.Num(); ++i)
+			FScriptArrayHelper ArrayHelper(BurstListProperty, BurstListProperty->ContainerPtrToValuePtr<void>(SpawnModule));
+			
+			if (ArrayHelper.Num() > 0)
 			{
-				OutSpawners.Burst.Intervals.Add(SpawnModule->BurstList[i].Time);
+				uint8* FirstBurstData = ArrayHelper.GetRawPtr(0);
+				FStructProperty* BurstStructProperty = CastField<FStructProperty>(BurstListProperty->Inner);
+				
+				if (BurstStructProperty && FirstBurstData)
+				{
+					FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+					FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+					
+					if (CountProperty && TimeProperty)
+					{
+						OutSpawners.Burst.Count = CountProperty->GetPropertyValue_InContainer(FirstBurstData);
+						OutSpawners.Burst.Time = TimeProperty->GetPropertyValue_InContainer(FirstBurstData);
+
+						// Extract additional bursts
+						for (int32 i = 1; i < ArrayHelper.Num(); ++i)
+						{
+							uint8* BurstData = ArrayHelper.GetRawPtr(i);
+							if (BurstData && TimeProperty)
+							{
+								float Time = TimeProperty->GetPropertyValue_InContainer(BurstData);
+								OutSpawners.Burst.Intervals.Add(Time);
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				OutSpawners.Burst.Count = 0;
+				OutSpawners.Burst.Time = 0.0f;
 			}
 		}
 		else

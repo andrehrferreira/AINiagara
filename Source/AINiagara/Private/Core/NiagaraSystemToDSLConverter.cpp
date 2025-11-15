@@ -203,8 +203,8 @@ bool UNiagaraSystemToDSLConverter::ExtractInitializationConfig(
 	OutInitialization.Velocity.Y = 0.0f;
 	OutInitialization.Velocity.Z = 0.0f;
 	
-	OutInitialization.Rotation.Min = 0.0f;
-	OutInitialization.Rotation.Max = 360.0f;
+	// Note: Rotation is not part of FVFXDSLInitialization
+	// Rotation would be handled separately if needed
 
 	UE_LOG(LogTemp, Log, TEXT("Initialization extraction not fully implemented, using defaults"));
 	return true;

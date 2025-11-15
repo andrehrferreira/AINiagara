@@ -5,8 +5,7 @@
 #include "Particles/ParticleEmitter.h"
 #include "Particles/ParticleModule.h"
 #include "Particles/ParticleModuleRequired.h"
-#include "Particles/ParticleModuleSpawn.h"
-#include "Particles/ParticleModuleSpawnPerUnit.h"
+// Note: ParticleModuleSpawn may not exist in all UE versions, use base class
 #include "Particles/ParticleModuleLifetime.h"
 #include "Particles/ParticleModuleSize.h"
 #include "Particles/ParticleModuleColor.h"
@@ -21,6 +20,7 @@
 #include "UObject/UObjectGlobals.h"
 #include "UObject/Class.h"
 #include "UObject/PropertyAccessUtil.h"
+#include "UObject/UnrealType.h"
 #include "Misc/MessageDialog.h"
 
 bool UCascadeSystemGenerator::CreateSystemFromDSL(
@@ -170,52 +170,110 @@ bool UCascadeSystemGenerator::ConfigureSpawnModule(
 		return false;
 	}
 
-	// Find or create spawn module
-	UParticleModuleSpawn* SpawnModule = nullptr;
-	for (UParticleModule* Module : Emitter->SpawnModules)
+	// Find or create spawn module using dynamic class loading
+	UParticleModule* SpawnModule = nullptr;
+	UClass* SpawnModuleClass = FindObject<UClass>(nullptr, TEXT("/Script/Engine.ParticleModuleSpawn"));
+	
+	if (!SpawnModuleClass)
 	{
-		if (UParticleModuleSpawn* Spawn = Cast<UParticleModuleSpawn>(Module))
+		// Fallback: try to find any existing spawn module
+		for (UParticleModule* Module : Emitter->SpawnModules)
 		{
-			SpawnModule = Spawn;
-			break;
+			if (Module && Module->GetClass()->GetName().Contains(TEXT("Spawn")))
+			{
+				SpawnModule = Module;
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Find existing spawn module
+		for (UParticleModule* Module : Emitter->SpawnModules)
+		{
+			if (Module && Module->IsA(SpawnModuleClass))
+			{
+				SpawnModule = Module;
+				break;
+			}
+		}
+
+		if (!SpawnModule)
+		{
+			// Create new spawn module
+			SpawnModule = NewObject<UParticleModule>(Emitter, SpawnModuleClass);
+			if (!SpawnModule)
+			{
+				OutError = TEXT("Failed to create UParticleModuleSpawn");
+				return false;
+			}
+			Emitter->SpawnModules.Add(SpawnModule);
 		}
 	}
 
 	if (!SpawnModule)
 	{
-		// Create new spawn module
-		SpawnModule = NewObject<UParticleModuleSpawn>(Emitter);
-		if (!SpawnModule)
-		{
-			OutError = TEXT("Failed to create UParticleModuleSpawn");
-			return false;
-		}
-		Emitter->SpawnModules.Add(SpawnModule);
+		OutError = TEXT("Could not find or create spawn module");
+		return false;
 	}
 
-	// Configure spawn rate
+	// Configure spawn rate using reflection
 	if (SpawnersDSL.Rate.SpawnRate > 0.0f)
 	{
-		SpawnModule->Rate = FVector2D(SpawnersDSL.Rate.SpawnRate, SpawnersDSL.Rate.SpawnRate);
+		FStructProperty* RateProperty = FindField<FStructProperty>(SpawnModule->GetClass(), TEXT("Rate"));
+		if (RateProperty)
+		{
+			FVector2D* RateValue = RateProperty->ContainerPtrToValuePtr<FVector2D>(SpawnModule);
+			if (RateValue)
+			{
+				*RateValue = FVector2D(SpawnersDSL.Rate.SpawnRate, SpawnersDSL.Rate.SpawnRate);
+			}
+		}
 	}
 
-	// Configure burst spawns
+	// Configure burst spawns using reflection
 	if (SpawnersDSL.Burst.Count > 0)
 	{
-		FParticleBurst Burst;
-		Burst.Count = SpawnersDSL.Burst.Count;
-		Burst.CountLow = SpawnersDSL.Burst.Count;
-		Burst.Time = SpawnersDSL.Burst.Time;
-		SpawnModule->BurstList.Add(Burst);
-
-		// Add additional bursts from intervals
-		for (float Interval : SpawnersDSL.Burst.Intervals)
+		FArrayProperty* BurstListProperty = FindField<FArrayProperty>(SpawnModule->GetClass(), TEXT("BurstList"));
+		if (BurstListProperty)
 		{
-			FParticleBurst AdditionalBurst;
-			AdditionalBurst.Count = SpawnersDSL.Burst.Count;
-			AdditionalBurst.CountLow = SpawnersDSL.Burst.Count;
-			AdditionalBurst.Time = Interval;
-			SpawnModule->BurstList.Add(AdditionalBurst);
+			FScriptArrayHelper ArrayHelper(BurstListProperty, BurstListProperty->ContainerPtrToValuePtr<void>(SpawnModule));
+			ArrayHelper.EmptyValues();
+
+			// Add first burst
+			int32 Index = ArrayHelper.AddValue();
+			uint8* BurstData = ArrayHelper.GetRawPtr(Index);
+			
+			FStructProperty* BurstStructProperty = CastField<FStructProperty>(BurstListProperty->Inner);
+			if (BurstStructProperty && BurstData)
+			{
+				// Set Count
+				FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+				FIntProperty* CountLowProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
+				FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+				
+				if (CountProperty) CountProperty->SetPropertyValue_InContainer(BurstData, SpawnersDSL.Burst.Count);
+				if (CountLowProperty) CountLowProperty->SetPropertyValue_InContainer(BurstData, SpawnersDSL.Burst.Count);
+				if (TimeProperty) TimeProperty->SetPropertyValue_InContainer(BurstData, SpawnersDSL.Burst.Time);
+			}
+
+			// Add additional bursts from intervals
+			for (float Interval : SpawnersDSL.Burst.Intervals)
+			{
+				int32 Index2 = ArrayHelper.AddValue();
+				uint8* BurstData2 = ArrayHelper.GetRawPtr(Index2);
+				
+				if (BurstStructProperty && BurstData2)
+				{
+					FIntProperty* CountProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("Count"));
+					FIntProperty* CountLowProperty = FindField<FIntProperty>(BurstStructProperty->Struct, TEXT("CountLow"));
+					FFloatProperty* TimeProperty = FindField<FFloatProperty>(BurstStructProperty->Struct, TEXT("Time"));
+					
+					if (CountProperty) CountProperty->SetPropertyValue_InContainer(BurstData2, SpawnersDSL.Burst.Count);
+					if (CountLowProperty) CountLowProperty->SetPropertyValue_InContainer(BurstData2, SpawnersDSL.Burst.Count);
+					if (TimeProperty) TimeProperty->SetPropertyValue_InContainer(BurstData2, Interval);
+				}
+			}
 		}
 	}
 

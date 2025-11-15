@@ -33,7 +33,7 @@ public:
 	static bool ApplyTextureToNiagaraEmitter(
 		UNiagaraEmitter* Emitter,
 		UTexture2D* Texture,
-		const FName& ParameterName = FName(TEXT("Texture")),
+		const FName& ParameterName,
 		FString& OutError
 	);
 
@@ -49,7 +49,7 @@ public:
 	static bool ApplyTextureToCascadeEmitter(
 		UParticleEmitter* Emitter,
 		UTexture2D* Texture,
-		const FName& ParameterName = FName(TEXT("Texture")),
+		const FName& ParameterName,
 		FString& OutError
 	);
 
@@ -66,8 +66,8 @@ public:
 	static bool ApplyTextureToNiagaraSystem(
 		UNiagaraSystem* System,
 		UTexture2D* Texture,
-		const FString& EmitterName = TEXT(""),
-		const FName& ParameterName = FName(TEXT("Texture")),
+		const FString& EmitterName,
+		const FName& ParameterName,
 		FString& OutError
 	);
 
@@ -84,8 +84,8 @@ public:
 	static bool ApplyTextureToCascadeSystem(
 		UParticleSystem* System,
 		UTexture2D* Texture,
-		const FString& EmitterName = TEXT(""),
-		const FName& ParameterName = FName(TEXT("Texture")),
+		const FString& EmitterName,
+		const FName& ParameterName,
 		FString& OutError
 	);
 
