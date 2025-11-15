@@ -17,7 +17,6 @@
 #include "Particles/ParticleModuleRotationRate.h"
 #include "Particles/ParticleModuleTypeDataBase.h"
 #include "Particles/TypeData/ParticleModuleTypeDataMesh.h"
-#include "Particles/TypeData/ParticleModuleTypeDataSprite.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/Package.h"
 #include "Misc/MessageDialog.h"

@@ -3,7 +3,6 @@
 #include "Tools/MeshDetectionHandler.h"
 #include "Engine/StaticMesh.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Engine/BasicShapeMesh.h"
 #include "UObject/ConstructorHelpers.h"
 
 bool UMeshDetectionHandler::DetectMeshRequirement(const FString& UserRequest, FMeshDetectionResult& OutResult)
