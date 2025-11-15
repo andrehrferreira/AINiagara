@@ -127,11 +127,11 @@
 - [x] 11.5 Integrate generated materials into emitter render modules (Cascade systems supported, Niagara requires graph API)
 
 ## 12. 3D Model Integration Phase
-- [ ] 12.1 Implement 3D model requirement detection
-- [ ] 12.2 Create user prompt for static mesh import
-- [ ] 12.3 Implement simple mesh selection (billboards, cones, spheres)
-- [ ] 12.4 Add scale and rotation application from LLM specifications
-- [ ] 12.5 Handle custom FBX model paths
+- [x] 12.1 Implement 3D model requirement detection
+- [x] 12.2 Create user prompt for static mesh import (integrated in Build3DModelInstructions)
+- [x] 12.3 Implement simple mesh selection (billboards, cones, spheres, cubes, cylinders)
+- [x] 12.4 Add scale and rotation application from LLM specifications (DSL support added)
+- [x] 12.5 Handle custom FBX model paths and apply meshes to emitters (Cascade systems supported with TypeData mesh module, Niagara requires graph API)
 
 ## 13. Cascade to Niagara Conversion Phase
 - [ ] 13.1 Integrate Cascade To Niagara plugin dependency

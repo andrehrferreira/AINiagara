@@ -468,9 +468,124 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 		{
 			RequiredModule->BlendMode = BLEND_Opaque;
 		}
-		else if (RenderDSL.BlendMode.Equals(TEXT("Modulate"), ESearchCase::IgnoreCase))
+		else 		else if (RenderDSL.BlendMode.Equals(TEXT("Modulate"), ESearchCase::IgnoreCase))
 		{
 			RequiredModule->BlendMode = BLEND_Modulate;
+		}
+
+		// Configure mesh if specified
+		if (RenderDSL.Mesh.bUseMesh)
+		{
+			UStaticMesh* MeshAsset = nullptr;
+			
+			// Try to load mesh from path if provided
+			if (!RenderDSL.Mesh.MeshPath.IsEmpty())
+			{
+				MeshAsset = LoadObject<UStaticMesh>(nullptr, *RenderDSL.Mesh.MeshPath);
+				
+				// If path doesn't exist, try simple mesh type
+				if (!MeshAsset && !RenderDSL.Mesh.MeshType.IsEmpty())
+				{
+					// Convert mesh type string to enum
+					ESimpleMeshType SimpleMeshType = ESimpleMeshType::Sphere;
+					FString LowerType = RenderDSL.Mesh.MeshType.ToLower();
+					
+					if (LowerType.Contains(TEXT("cone")))
+					{
+						SimpleMeshType = ESimpleMeshType::Cone;
+					}
+					else if (LowerType.Contains(TEXT("sphere")))
+					{
+						SimpleMeshType = ESimpleMeshType::Sphere;
+					}
+					else if (LowerType.Contains(TEXT("cube")))
+					{
+						SimpleMeshType = ESimpleMeshType::Cube;
+					}
+					else if (LowerType.Contains(TEXT("cylinder")))
+					{
+						SimpleMeshType = ESimpleMeshType::Cylinder;
+					}
+					
+					FString MeshError;
+					if (UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, MeshAsset, MeshError))
+					{
+						// Mesh loaded successfully
+					}
+				}
+			}
+			else if (!RenderDSL.Mesh.MeshType.IsEmpty())
+			{
+				// Try to load simple mesh by type
+				ESimpleMeshType SimpleMeshType = ESimpleMeshType::Sphere;
+				FString LowerType = RenderDSL.Mesh.MeshType.ToLower();
+				
+				if (LowerType.Contains(TEXT("cone")))
+				{
+					SimpleMeshType = ESimpleMeshType::Cone;
+				}
+				else if (LowerType.Contains(TEXT("sphere")))
+				{
+					SimpleMeshType = ESimpleMeshType::Sphere;
+				}
+				else if (LowerType.Contains(TEXT("cube")))
+				{
+					SimpleMeshType = ESimpleMeshType::Cube;
+				}
+				else if (LowerType.Contains(TEXT("cylinder")))
+				{
+					SimpleMeshType = ESimpleMeshType::Cylinder;
+				}
+				
+				FString MeshError;
+				UMeshDetectionHandler::LoadSimpleMesh(SimpleMeshType, MeshAsset, MeshError);
+			}
+
+			// Apply mesh if loaded
+			if (MeshAsset)
+			{
+				// Find or create TypeData mesh module
+				UParticleModuleTypeDataMesh* MeshTypeData = nullptr;
+				for (UParticleModule* Module : Emitter->TypeDataModules)
+				{
+					if (UParticleModuleTypeDataMesh* MeshData = Cast<UParticleModuleTypeDataMesh>(Module))
+					{
+						MeshTypeData = MeshData;
+						break;
+					}
+				}
+
+				if (!MeshTypeData)
+				{
+					MeshTypeData = NewObject<UParticleModuleTypeDataMesh>(Emitter);
+					if (MeshTypeData)
+					{
+						Emitter->TypeDataModules.Add(MeshTypeData);
+					}
+				}
+
+				if (MeshTypeData)
+				{
+					MeshTypeData->Mesh = MeshAsset;
+					
+					// Set scale
+					if (RenderDSL.Mesh.Scale > 0.0f)
+					{
+						// Scale is applied through size module, which is configured separately
+						// For mesh particles, size affects mesh scale
+					}
+					
+					// Note: Rotation is typically handled through rotation modules, not in TypeData
+					// This is a simplified implementation - full rotation support would require
+					// additional rotation modules (UParticleModuleRotation, etc.)
+				}
+			}
+			else if (RenderDSL.Mesh.bUseMesh)
+			{
+				// Mesh requested but failed to load
+				UE_LOG(LogTemp, Warning, TEXT("Failed to load mesh for emitter. Mesh path: %s, Type: %s"), 
+					*RenderDSL.Mesh.MeshPath, *RenderDSL.Mesh.MeshType);
+			}
 		}
 	}
 

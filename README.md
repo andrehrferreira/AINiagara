@@ -67,7 +67,6 @@ AINiagara is a production-ready Unreal Engine 5 plugin that revolutionizes VFX c
 - ✅ **Production ready** - Fully tested on Unreal Engine 5.3+
 
 ### 🚧 Pending MVP Features
-- 🔧 **Shader/Material generation** - AI-powered material creation and configuration (Phase 11)
 - 📦 **3D Model integration** - Mesh-based particle systems with AI-generated models (Phase 12)
 - 🔄 **Cascade to Niagara conversion** - Automated migration from legacy to modern systems (Phase 13)
 

@@ -238,6 +238,35 @@ struct FVFXDSLUpdate
 };
 
 /**
+ * DSL Mesh/3D Model structure
+ */
+USTRUCT(BlueprintType)
+struct FVFXDSLMesh
+{
+	GENERATED_BODY()
+
+	/** Mesh path or name (e.g., "/Game/Meshes/Sphere" or "Sphere") */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString MeshPath;
+
+	/** Mesh type (Billboard, Cone, Sphere, Custom) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString MeshType = TEXT("Billboard");
+
+	/** Scale factor (XYZ uniform or separate) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Scale = 1.0f;
+
+	/** Rotation in degrees (XYZ) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVFXDSLVelocity Rotation;
+
+	/** Whether to use mesh instead of sprite */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bUseMesh = false;
+};
+
+/**
  * DSL Render structure
  */
 USTRUCT(BlueprintType)
@@ -260,6 +289,10 @@ struct FVFXDSLRender
 	/** Sort mode */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString Sort = TEXT("ViewDepth");
+
+	/** Mesh/3D Model configuration */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVFXDSLMesh Mesh;
 };
 
 /**

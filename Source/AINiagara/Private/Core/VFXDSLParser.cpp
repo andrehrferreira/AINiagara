@@ -412,6 +412,32 @@ bool UVFXDSLParser::ParseRender(const TSharedPtr<FJsonObject>& JsonObject, FVFXD
 	JsonObject->TryGetStringField(TEXT("blendMode"), OutRender.BlendMode);
 	JsonObject->TryGetStringField(TEXT("sort"), OutRender.Sort);
 	
+	// Parse mesh configuration
+	const TSharedPtr<FJsonObject>* MeshObject;
+	if (JsonObject->TryGetObjectField(TEXT("mesh"), MeshObject))
+	{
+		(*MeshObject)->TryGetStringField(TEXT("meshPath"), OutRender.Mesh.MeshPath);
+		(*MeshObject)->TryGetStringField(TEXT("meshType"), OutRender.Mesh.MeshType);
+		
+		double ScaleValue;
+		if ((*MeshObject)->TryGetNumberField(TEXT("scale"), ScaleValue))
+		{
+			OutRender.Mesh.Scale = static_cast<float>(ScaleValue);
+		}
+		
+		const TSharedPtr<FJsonObject>* RotationObject;
+		if ((*MeshObject)->TryGetObjectField(TEXT("rotation"), RotationObject))
+		{
+			ParseVelocity(*RotationObject, OutRender.Mesh.Rotation);
+		}
+		
+		bool bUseMeshValue;
+		if ((*MeshObject)->TryGetBoolField(TEXT("useMesh"), bUseMeshValue))
+		{
+			OutRender.Mesh.bUseMesh = bUseMeshValue;
+		}
+	}
+	
 	return true;
 }
 

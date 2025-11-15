@@ -119,7 +119,14 @@ FString UVFXPromptBuilder::GetDSLFormatSpecification()
 		"        \"material\": \"string\",\n"
 		"        \"texture\": \"string\",\n"
 		"        \"blendMode\": \"string\",\n"
-		"        \"sort\": \"string\"\n"
+		"        \"sort\": \"string\",\n"
+		"        \"mesh\": {\n"
+		"          \"meshPath\": \"string\",\n"
+		"          \"meshType\": \"Billboard\" | \"Cone\" | \"Sphere\" | \"Cube\" | \"Cylinder\" | \"Custom\",\n"
+		"          \"scale\": number,\n"
+		"          \"rotation\": { \"x\": number, \"y\": number, \"z\": number },\n"
+		"          \"useMesh\": boolean\n"
+		"        }\n"
 		"      }\n"
 		"    }\n"
 		"  ]\n"
@@ -213,13 +220,16 @@ FString UVFXPromptBuilder::BuildToolUsageInstructions()
 FString UVFXPromptBuilder::Build3DModelInstructions()
 {
 	return TEXT(
-		"3D Model Handling:\n"
-		"- For 80% of gameplay VFX, use sprites/flipbooks or simple meshes (billboards, cones, spheres)\n"
-		"- When a custom 3D model is required, you MUST request the user to import the static mesh\n"
-		"- Inform the user: \"Please import the static mesh for [description] and provide the asset path\"\n"
-		"- Once the user provides the mesh path, use it in your DSL with appropriate scale and rotation\n"
-		"- DO NOT attempt to generate 3D models automatically\n"
-		"- Simple meshes (billboards, cones, spheres) can be selected automatically - specify which one to use\n"
+		"3D Model/Mesh Handling:\n"
+		"- For most VFX (80%), use sprites/flipbooks or simple meshes (Billboard, Cone, Sphere, Cube, Cylinder)\n"
+		"- When mesh-based particles are needed (debris, foliage, projectiles), detect automatically and use appropriate simple mesh\n"
+		"- Use render.mesh.useMesh=true and specify render.mesh.meshType when 3D geometry is required\n"
+		"- Available simple meshes: Sphere (debris), Cone (projectiles), Billboard (foliage), Cube (objects), Cylinder (objects)\n"
+		"- For custom 3D models, detect the requirement and prompt user: \"Please import static mesh for [description] and provide asset path\"\n"
+		"- Once user provides mesh path, use render.mesh.meshPath with render.mesh.meshType=\"Custom\"\n"
+		"- Always include scale and rotation in render.mesh when using meshes\n"
+		"- DO NOT attempt to generate 3D models automatically - only use existing assets or simple shapes\n"
+		"- Default mesh paths: /Engine/BasicShapes/Sphere, /Engine/BasicShapes/Cone, /Engine/BasicShapes/Cube, etc.\n"
 	);
 }
 

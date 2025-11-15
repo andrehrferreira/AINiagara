@@ -16,6 +16,7 @@
 #include "Tools/TextureMaterialHelper.h"
 #include "Tools/ShaderGenerationHandler.h"
 #include "Tools/MaterialGenerationHandler.h"
+#include "Tools/MeshDetectionHandler.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleEmitter.h"
 #include "Particles/ParticleModuleRequired.h"
@@ -225,12 +226,16 @@ FReply SAINiagaraChatWidget::OnSendClicked()
 	// Show loading with message
 	ShowLoading(true, TEXT("Sending request to AI..."));
 
+	// Check for mesh requirements in user request before sending
+	FMeshDetectionResult MeshResult;
+	bool bMeshDetected = UMeshDetectionHandler::DetectMeshRequirement(UserMessage, MeshResult);
+	
 	// Send request to Gemini API
 	APIClient.SendChatCompletion(
 		UserMessage,
 		MessagesWithSystemPrompt,
 		AvailableTools,
-		FOnGeminiResponse::CreateLambda([this](const FString& ResponseText)
+		FOnGeminiResponse::CreateLambda([this, UserMessage, bMeshDetected, MeshResult](const FString& ResponseText)
 		{
 			// Hide loading
 			ShowLoading(false);
@@ -249,6 +254,20 @@ FReply SAINiagaraChatWidget::OnSendClicked()
 			{
 				// Tool call was processed, don't try to parse as DSL
 				return;
+			}
+			
+			// Show mesh detection info if detected
+			if (bMeshDetected && MeshResult.bMeshRequired)
+			{
+				FString MeshInfo = FString::Printf(
+					TEXT("📦 Mesh requirement detected: %s\n")
+					TEXT("Recommended simple mesh: %s\n")
+					TEXT("Detected keywords: %s"),
+					*MeshResult.MeshType,
+					*MeshResult.RecommendedSimpleMesh,
+					*FString::Join(MeshResult.DetectedKeywords, TEXT(", "))
+				);
+				AddMessageToHistory(TEXT("system"), MeshInfo, false, false);
 			}
 			
 			// Try to parse DSL from response
