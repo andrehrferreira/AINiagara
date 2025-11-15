@@ -178,6 +178,18 @@ private:
 	void ProcessTextureGenerationTool(TSharedPtr<FJsonObject> ToolParameters);
 
 	/**
+	 * Process shader generation tool call
+	 * @param ToolParameters Tool call parameters JSON
+	 */
+	void ProcessShaderGenerationTool(TSharedPtr<FJsonObject> ToolParameters);
+
+	/**
+	 * Process material generation tool call
+	 * @param ToolParameters Tool call parameters JSON
+	 */
+	void ProcessMaterialGenerationTool(TSharedPtr<FJsonObject> ToolParameters);
+
+	/**
 	 * Preview system manager instance
 	 */
 	UPROPERTY()

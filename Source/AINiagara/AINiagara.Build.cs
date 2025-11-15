@@ -63,7 +63,9 @@ public class AINiagara : ModuleRules
 				"EditorSubsystem",
 				"ImageWrapper",
 				"RenderCore",
-				"RHI"
+				"RHI",
+				"MaterialEditor",
+				"MaterialEditorUtilities"
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

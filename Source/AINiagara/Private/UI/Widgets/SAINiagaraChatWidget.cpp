@@ -14,6 +14,8 @@
 #include "Core/VFXDSLDiff.h"
 #include "Tools/TextureGenerationHandler.h"
 #include "Tools/TextureMaterialHelper.h"
+#include "Tools/ShaderGenerationHandler.h"
+#include "Tools/MaterialGenerationHandler.h"
 #include "Particles/ParticleSystem.h"
 #include "Core/VFXDSL.h"
 #include "NiagaraSystem.h"
@@ -1038,14 +1040,14 @@ bool SAINiagaraChatWidget::ProcessToolCalls(const FString& ResponseText)
 			}
 			else if (FunctionName == TEXT("tool:shader"))
 			{
-				// TODO: Implement shader generation (Phase 11)
-				AddMessageToHistory(TEXT("system"), TEXT("Shader generation is not yet implemented (Phase 11)."), true, false);
+				TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+				ProcessShaderGenerationTool(ArgsObj);
 				return true;
 			}
 			else if (FunctionName == TEXT("tool:material"))
 			{
-				// TODO: Implement material generation (Phase 11)
-				AddMessageToHistory(TEXT("system"), TEXT("Material generation is not yet implemented (Phase 11)."), true, false);
+				TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+				ProcessMaterialGenerationTool(ArgsObj);
 				return true;
 			}
 		}
@@ -1077,6 +1079,18 @@ bool SAINiagaraChatWidget::ProcessToolCalls(const FString& ResponseText)
 							{
 								TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
 								ProcessTextureGenerationTool(ArgsObj);
+								return true;
+							}
+							else if (FunctionName == TEXT("tool:shader"))
+							{
+								TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+								ProcessShaderGenerationTool(ArgsObj);
+								return true;
+							}
+							else if (FunctionName == TEXT("tool:material"))
+							{
+								TSharedPtr<FJsonObject> ArgsObj = FunctionCallObj->GetObjectField(TEXT("args"));
+								ProcessMaterialGenerationTool(ArgsObj);
 								return true;
 							}
 						}
@@ -1243,6 +1257,181 @@ void SAINiagaraChatWidget::ProcessTextureGenerationTool(TSharedPtr<FJsonObject> 
 			{
 				FString ErrorMessage = FString::Printf(
 					TEXT("❌ Texture generation failed: %s"),
+					*Result.ErrorMessage
+				);
+				AddMessageToHistory(TEXT("system"), ErrorMessage, true, false);
+				ShowErrorNotification(ErrorMessage);
+			}
+		})
+	);
+}
+
+void SAINiagaraChatWidget::ProcessShaderGenerationTool(TSharedPtr<FJsonObject> ToolParameters)
+{
+	if (!ToolParameters.IsValid())
+	{
+		ShowErrorNotification(TEXT("Invalid shader generation parameters"));
+		return;
+	}
+
+	// Extract parameters
+	FShaderGenerationRequest Request;
+	
+	// Specifications (required)
+	if (!ToolParameters->TryGetStringField(TEXT("specifications"), Request.Specifications))
+	{
+		ShowErrorNotification(TEXT("Shader specifications are required"));
+		return;
+	}
+
+	// Functionality (required)
+	if (!ToolParameters->TryGetStringField(TEXT("functionality"), Request.Functionality))
+	{
+		ShowErrorNotification(TEXT("Shader functionality is required"));
+		return;
+	}
+
+	// Shader type (optional, default PixelShader)
+	ToolParameters->TryGetStringField(TEXT("shaderType"), Request.ShaderType);
+	if (Request.ShaderType.IsEmpty())
+	{
+		Request.ShaderType = TEXT("PixelShader");
+	}
+
+	// Show loading
+	FString LoadingMessage = FString::Printf(
+		TEXT("Generating %s shader code..."),
+		*Request.ShaderType
+	);
+	ShowLoading(true, LoadingMessage);
+	AddMessageToHistory(TEXT("system"), LoadingMessage, false, false);
+
+	// Generate shader
+	UShaderGenerationHandler::GenerateShader(
+		Request,
+		FOnShaderGenerated::CreateLambda([this, Request](const FShaderGenerationResult& Result)
+		{
+			ShowLoading(false);
+
+			if (Result.bSuccess && !Result.HLSLCode.IsEmpty())
+			{
+				FString SuccessMessage = FString::Printf(
+					TEXT("✅ Generated %s shader code (Entry point: %s)!"),
+					*Request.ShaderType,
+					*Result.EntryPoint
+				);
+				
+				AddMessageToHistory(TEXT("system"), SuccessMessage, false, true);
+				AddMessageToHistory(TEXT("assistant"), FString::Printf(TEXT("```hlsl\n%s\n```"), *Result.HLSLCode), false, false);
+				ShowSuccessNotification(SuccessMessage);
+			}
+			else
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("❌ Shader generation failed: %s"),
+					*Result.ErrorMessage
+				);
+				AddMessageToHistory(TEXT("system"), ErrorMessage, true, false);
+				ShowErrorNotification(ErrorMessage);
+			}
+		})
+	);
+}
+
+void SAINiagaraChatWidget::ProcessMaterialGenerationTool(TSharedPtr<FJsonObject> ToolParameters)
+{
+	if (!ToolParameters.IsValid())
+	{
+		ShowErrorNotification(TEXT("Invalid material generation parameters"));
+		return;
+	}
+
+	// Extract parameters
+	FMaterialGenerationRequest Request;
+	
+	// Properties (optional, can be JSON string or description)
+	ToolParameters->TryGetStringField(TEXT("properties"), Request.Properties);
+
+	// Shader reference (optional)
+	ToolParameters->TryGetStringField(TEXT("shaderReference"), Request.ShaderReference);
+
+	// Material name (optional)
+	ToolParameters->TryGetStringField(TEXT("materialName"), Request.MaterialName);
+	if (Request.MaterialName.IsEmpty())
+	{
+		Request.MaterialName = TEXT("M_GeneratedMaterial_") + FGuid::NewGuid().ToString();
+	}
+
+	// Blend mode (optional, default Translucent)
+	ToolParameters->TryGetStringField(TEXT("blendMode"), Request.BlendMode);
+	if (Request.BlendMode.IsEmpty())
+	{
+		Request.BlendMode = TEXT("Translucent");
+	}
+
+	// Shading model (optional)
+	ToolParameters->TryGetStringField(TEXT("shadingModel"), Request.ShadingModel);
+
+	// Texture bindings (optional)
+	if (ToolParameters->HasTypedField<EJson::Object>(TEXT("textureBindings")))
+	{
+		TSharedPtr<FJsonObject> BindingsObj = ToolParameters->GetObjectField(TEXT("textureBindings"));
+		for (const auto& Binding : BindingsObj->Values)
+		{
+			if (Binding.Value->Type == EJson::String)
+			{
+				Request.TextureBindings.Add(Binding.Key, Binding.Value->AsString());
+			}
+		}
+	}
+
+	// Determine package path
+	FString PackagePath = TEXT("/Game/VFX/Materials");
+	if (!CurrentAssetPath.IsEmpty())
+	{
+		int32 LastSlash = CurrentAssetPath.Find(TEXT("/"), ESearchCase::CaseSensitive, ESearchDir::FromEnd);
+		if (LastSlash != INDEX_NONE)
+		{
+			PackagePath = CurrentAssetPath.Left(LastSlash) + TEXT("/Materials");
+		}
+	}
+
+	// Show loading
+	FString LoadingMessage = FString::Printf(
+		TEXT("Generating material '%s'..."),
+		*Request.MaterialName
+	);
+	ShowLoading(true, LoadingMessage);
+	AddMessageToHistory(TEXT("system"), LoadingMessage, false, false);
+
+	// Generate material
+	UMaterialGenerationHandler::GenerateMaterial(
+		Request,
+		PackagePath,
+		FOnMaterialGenerated::CreateLambda([this, Request](const FMaterialGenerationResult& Result)
+		{
+			ShowLoading(false);
+
+			if (Result.bSuccess && Result.Material)
+			{
+				FString SuccessMessage = FString::Printf(
+					TEXT("✅ Generated material '%s' at %s!"),
+					*Request.MaterialName,
+					*Result.MaterialPath
+				);
+				
+				AddMessageToHistory(TEXT("system"), SuccessMessage, false, true);
+				ShowSuccessNotification(SuccessMessage);
+
+				// TODO: Apply material to target emitter if specified (Phase 11.5)
+				AddMessageToHistory(TEXT("system"), 
+					TEXT("💡 Tip: Use the material path in your VFX generation request to apply this material to emitters."),
+					false, false);
+			}
+			else
+			{
+				FString ErrorMessage = FString::Printf(
+					TEXT("❌ Material generation failed: %s"),
 					*Result.ErrorMessage
 				);
 				AddMessageToHistory(TEXT("system"), ErrorMessage, true, false);
