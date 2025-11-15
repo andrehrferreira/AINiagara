@@ -26,15 +26,15 @@ struct FVFXDSLEffect
 	GENERATED_BODY()
 
 	/** Effect type: Niagara or Cascade */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	EVFXEffectType Type = EVFXEffectType::Niagara;
 
 	/** Effect duration in seconds */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Duration = 5.0f;
 
 	/** Whether the effect loops */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	bool bLooping = false;
 };
 
@@ -47,15 +47,15 @@ struct FVFXDSLBurst
 	GENERATED_BODY()
 
 	/** Number of particles to spawn */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	int32 Count = 10;
 
 	/** Time at which to spawn */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Time = 0.0f;
 
 	/** Burst intervals (for multiple bursts) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	TArray<float> Intervals;
 };
 
@@ -68,11 +68,11 @@ struct FVFXDSLRate
 	GENERATED_BODY()
 
 	/** Particles per second spawn rate */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float SpawnRate = 10.0f;
 
 	/** Scale factor over time */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float ScaleOverTime = 1.0f;
 };
 
@@ -85,11 +85,11 @@ struct FVFXDSLSpawners
 	GENERATED_BODY()
 
 	/** Burst spawn configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLBurst Burst;
 
 	/** Rate spawn configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLRate Rate;
 };
 
@@ -101,16 +101,16 @@ struct FVFXDSLColor
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float R = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float G = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float B = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float A = 1.0f;
 
 	/** Convert to FLinearColor */
@@ -129,11 +129,11 @@ struct FVFXDSLSize
 	GENERATED_BODY()
 
 	/** Minimum size */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Min = 1.0f;
 
 	/** Maximum size */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Max = 1.0f;
 };
 
@@ -145,13 +145,13 @@ struct FVFXDSLVelocity
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float X = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Y = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Z = 0.0f;
 
 	/** Convert to FVector */
@@ -170,15 +170,15 @@ struct FVFXDSLInitialization
 	GENERATED_BODY()
 
 	/** Particle color */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLColor Color;
 
 	/** Particle size range */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLSize Size;
 
 	/** Particle initial velocity */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLVelocity Velocity;
 };
 
@@ -191,11 +191,11 @@ struct FVFXDSLForces
 	GENERATED_BODY()
 
 	/** Gravity force */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Gravity = 0.0f;
 
 	/** Wind force vector */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLVelocity Wind;
 };
 
@@ -208,11 +208,11 @@ struct FVFXDSLCollision
 	GENERATED_BODY()
 
 	/** Whether collision is enabled */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	bool bEnabled = false;
 
 	/** Bounce coefficient */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Bounce = 0.5f;
 };
 
@@ -225,15 +225,15 @@ struct FVFXDSLUpdate
 	GENERATED_BODY()
 
 	/** Applied forces */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLForces Forces;
 
 	/** Drag coefficient */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Drag = 0.0f;
 
 	/** Collision settings */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLCollision Collision;
 };
 
@@ -246,23 +246,23 @@ struct FVFXDSLMesh
 	GENERATED_BODY()
 
 	/** Mesh path or name (e.g., "/Game/Meshes/Sphere" or "Sphere") */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString MeshPath;
 
 	/** Mesh type (Billboard, Cone, Sphere, Custom) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString MeshType = TEXT("Billboard");
 
 	/** Scale factor (XYZ uniform or separate) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	float Scale = 1.0f;
 
 	/** Rotation in degrees (XYZ) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLVelocity Rotation;
 
 	/** Whether to use mesh instead of sprite */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	bool bUseMesh = false;
 };
 
@@ -275,23 +275,23 @@ struct FVFXDSLRender
 	GENERATED_BODY()
 
 	/** Material path or name */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString Material;
 
 	/** Texture path or name */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString Texture;
 
 	/** Blend mode */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString BlendMode = TEXT("Translucent");
 
 	/** Sort mode */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString Sort = TEXT("ViewDepth");
 
 	/** Mesh/3D Model configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLMesh Mesh;
 };
 
@@ -304,23 +304,23 @@ struct FVFXDSLEmitter
 	GENERATED_BODY()
 
 	/** Emitter name */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FString Name = TEXT("Emitter");
 
 	/** Spawner configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLSpawners Spawners;
 
 	/** Initialization parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLInitialization Initialization;
 
 	/** Update parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLUpdate Update;
 
 	/** Render parameters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLRender Render;
 };
 
@@ -333,11 +333,11 @@ struct FVFXDSL
 	GENERATED_BODY()
 
 	/** Effect configuration */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	FVFXDSLEffect Effect;
 
 	/** List of emitters */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	TArray<FVFXDSLEmitter> Emitters;
 };
 
@@ -350,11 +350,11 @@ struct FVFXDSLValidationResult
 	GENERATED_BODY()
 
 	/** Whether validation passed */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	bool bIsValid = false;
 
 	/** Error messages if validation failed */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	TArray<FString> ErrorMessages;
 
 	/** Add an error message */

@@ -61,7 +61,6 @@ public:
 	 * @param OutResult Detection result with mesh requirements
 	 * @return True if mesh was detected as required
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Mesh")
 	static bool DetectMeshRequirement(const FString& UserRequest, FMeshDetectionResult& OutResult);
 
 	/**

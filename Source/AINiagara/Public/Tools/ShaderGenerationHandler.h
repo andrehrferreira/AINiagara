@@ -56,7 +56,10 @@ struct FShaderGenerationResult
 	FString EntryPoint = TEXT("MainPS");
 };
 
-DECLARE_DELEGATE_OneParam(FOnShaderGenerated, const FShaderGenerationResult& Result);
+/**
+ * Delegate called when shader generation completes
+ */
+DECLARE_DELEGATE_OneParam(FOnShaderGenerated, const FShaderGenerationResult&);
 
 /**
  * Handler for shader code generation using AI
@@ -73,7 +76,6 @@ public:
 	 * @param Request Shader generation parameters
 	 * @param OnComplete Callback when generation completes
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Shader")
 	static void GenerateShader(
 		const FShaderGenerationRequest& Request,
 		FOnShaderGenerated OnComplete

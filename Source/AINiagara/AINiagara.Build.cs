@@ -64,8 +64,8 @@ public class AINiagara : ModuleRules
 				"ImageWrapper",
 				"RenderCore",
 				"RHI",
-				"MaterialEditor",
-				"MaterialEditorUtilities"
+				"MaterialEditor"
+				// Note: MaterialEditorUtilities may not be available in all UE versions
 				// ... add private dependencies that you statically link with here ...	
 			}
 		);

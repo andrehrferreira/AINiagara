@@ -44,14 +44,10 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraSimpleTool() {}
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UAINiagaraSimpleToolBuilder_Statics::DependentSingletons) < 16);
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UAINiagaraSimpleToolBuilder_Statics::Class_MetaDataParams[] = {
-#if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n * Builder for UAINiagaraSimpleTool\n */" },
-#endif
 		{ "IncludePath", "Tools/AINiagaraSimpleTool.h" },
 		{ "ModuleRelativePath", "Private/Tools/AINiagaraSimpleTool.h" },
-#if !UE_BUILD_SHIPPING
 		{ "ToolTip", "Builder for UAINiagaraSimpleTool" },
-#endif
 	};
 #endif
 	const FCppClassTypeInfoStatic Z_Construct_UClass_UAINiagaraSimpleToolBuilder_Statics::StaticCppClassTypeInfo = {
@@ -117,27 +113,19 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraSimpleTool() {}
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UAINiagaraSimpleToolProperties_Statics::DependentSingletons) < 16);
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UAINiagaraSimpleToolProperties_Statics::Class_MetaDataParams[] = {
-#if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n * Settings UObject for UAINiagaraSimpleTool. This UClass inherits from UInteractiveToolPropertySet,\n * which provides an OnModified delegate that the Tool will listen to for changes in property values.\n */" },
-#endif
 		{ "IncludePath", "Tools/AINiagaraSimpleTool.h" },
 		{ "ModuleRelativePath", "Private/Tools/AINiagaraSimpleTool.h" },
-#if !UE_BUILD_SHIPPING
 		{ "ToolTip", "Settings UObject for UAINiagaraSimpleTool. This UClass inherits from UInteractiveToolPropertySet,\nwhich provides an OnModified delegate that the Tool will listen to for changes in property values." },
-#endif
 	};
 #endif
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UAINiagaraSimpleToolProperties_Statics::NewProp_ShowExtendedInfo_MetaData[] = {
 		{ "Category", "Options" },
-#if !UE_BUILD_SHIPPING
 		{ "Comment", "/** If enabled, dialog should display extended information about the actor clicked on. Otherwise, only basic info will be shown. */" },
-#endif
 		{ "DisplayName", "Show Extended Info" },
 		{ "ModuleRelativePath", "Private/Tools/AINiagaraSimpleTool.h" },
-#if !UE_BUILD_SHIPPING
 		{ "ToolTip", "If enabled, dialog should display extended information about the actor clicked on. Otherwise, only basic info will be shown." },
-#endif
 	};
 #endif
 	void Z_Construct_UClass_UAINiagaraSimpleToolProperties_Statics::NewProp_ShowExtendedInfo_SetBit(void* Obj)
@@ -210,14 +198,10 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraSimpleTool() {}
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UAINiagaraSimpleTool_Statics::DependentSingletons) < 16);
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UAINiagaraSimpleTool_Statics::Class_MetaDataParams[] = {
-#if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n * UAINiagaraSimpleTool is an example Tool that opens a message box displaying info about an actor that the user\n * clicks left mouse button. All the action is in the ::OnClicked handler.\n */" },
-#endif
 		{ "IncludePath", "Tools/AINiagaraSimpleTool.h" },
 		{ "ModuleRelativePath", "Private/Tools/AINiagaraSimpleTool.h" },
-#if !UE_BUILD_SHIPPING
 		{ "ToolTip", "UAINiagaraSimpleTool is an example Tool that opens a message box displaying info about an actor that the user\nclicks left mouse button. All the action is in the ::OnClicked handler." },
-#endif
 	};
 #endif
 #if WITH_METADATA
@@ -262,17 +246,17 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraSimpleTool() {}
 	}
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UAINiagaraSimpleTool);
 	UAINiagaraSimpleTool::~UAINiagaraSimpleTool() {}
-	struct Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics
+	struct Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics
 	{
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
-	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UAINiagaraSimpleToolBuilder, UAINiagaraSimpleToolBuilder::StaticClass, TEXT("UAINiagaraSimpleToolBuilder"), &Z_Registration_Info_UClass_UAINiagaraSimpleToolBuilder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleToolBuilder), 3892042250U) },
-		{ Z_Construct_UClass_UAINiagaraSimpleToolProperties, UAINiagaraSimpleToolProperties::StaticClass, TEXT("UAINiagaraSimpleToolProperties"), &Z_Registration_Info_UClass_UAINiagaraSimpleToolProperties, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleToolProperties), 2939961170U) },
-		{ Z_Construct_UClass_UAINiagaraSimpleTool, UAINiagaraSimpleTool::StaticClass, TEXT("UAINiagaraSimpleTool"), &Z_Registration_Info_UClass_UAINiagaraSimpleTool, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleTool), 533582832U) },
+	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo[] = {
+		{ Z_Construct_UClass_UAINiagaraSimpleToolBuilder, UAINiagaraSimpleToolBuilder::StaticClass, TEXT("UAINiagaraSimpleToolBuilder"), &Z_Registration_Info_UClass_UAINiagaraSimpleToolBuilder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleToolBuilder), 2244814397U) },
+		{ Z_Construct_UClass_UAINiagaraSimpleToolProperties, UAINiagaraSimpleToolProperties::StaticClass, TEXT("UAINiagaraSimpleToolProperties"), &Z_Registration_Info_UClass_UAINiagaraSimpleToolProperties, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleToolProperties), 2307472668U) },
+		{ Z_Construct_UClass_UAINiagaraSimpleTool, UAINiagaraSimpleTool::StaticClass, TEXT("UAINiagaraSimpleTool"), &Z_Registration_Info_UClass_UAINiagaraSimpleTool, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraSimpleTool), 3914410782U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_919874465(TEXT("/Script/AINiagara"),
-		Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_706106855(TEXT("/Script/AINiagara"),
+		Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Private_Tools_AINiagaraSimpleTool_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

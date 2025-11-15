@@ -28,23 +28,23 @@ struct FVFXDSLChange
 	GENERATED_BODY()
 
 	/** Path to the changed property (e.g., "Effect.Duration", "Emitters[0].Name") */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	FString PropertyPath;
 
 	/** Type of change */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	EVFXDSLChangeType ChangeType = EVFXDSLChangeType::None;
 
 	/** Old value (as string) */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	FString OldValue;
 
 	/** New value (as string) */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	FString NewValue;
 
 	/** Human-readable description of the change */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	FString Description;
 };
 
@@ -57,15 +57,15 @@ struct FVFXDSLDiffResult
 	GENERATED_BODY()
 
 	/** List of all changes detected */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	TArray<FVFXDSLChange> Changes;
 
 	/** Whether any changes were detected */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	bool bHasChanges = false;
 
 	/** Summary message */
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category = "VFX")
 	FString Summary;
 
 	/** Add a change */

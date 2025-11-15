@@ -38,14 +38,10 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraEditorMode() {}
 	static_assert(UE_ARRAY_COUNT(Z_Construct_UClass_UAINiagaraEditorMode_Statics::DependentSingletons) < 16);
 #if WITH_METADATA
 	const UECodeGen_Private::FMetaDataPairParam Z_Construct_UClass_UAINiagaraEditorMode_Statics::Class_MetaDataParams[] = {
-#if !UE_BUILD_SHIPPING
 		{ "Comment", "/**\n * This class provides an example of how to extend a UEdMode to add some simple tools\n * using the InteractiveTools framework. The various UEdMode input event handlers (see UEdMode.h)\n * forward events to a UEdModeInteractiveToolsContext instance, which\n * has all the logic for interacting with the InputRouter, ToolManager, etc.\n * The functions provided here are the minimum to get started inserting some custom behavior.\n * Take a look at the UEdMode markup for more extensibility options.\n */" },
-#endif
 		{ "IncludePath", "AINiagaraEditorMode.h" },
 		{ "ModuleRelativePath", "Public/AINiagaraEditorMode.h" },
-#if !UE_BUILD_SHIPPING
 		{ "ToolTip", "This class provides an example of how to extend a UEdMode to add some simple tools\nusing the InteractiveTools framework. The various UEdMode input event handlers (see UEdMode.h)\nforward events to a UEdModeInteractiveToolsContext instance, which\nhas all the logic for interacting with the InputRouter, ToolManager, etc.\nThe functions provided here are the minimum to get started inserting some custom behavior.\nTake a look at the UEdMode markup for more extensibility options." },
-#endif
 	};
 #endif
 	const FCppClassTypeInfoStatic Z_Construct_UClass_UAINiagaraEditorMode_Statics::StaticCppClassTypeInfo = {
@@ -79,15 +75,15 @@ void EmptyLinkFunctionForGeneratedCodeAINiagaraEditorMode() {}
 		return UAINiagaraEditorMode::StaticClass();
 	}
 	DEFINE_VTABLE_PTR_HELPER_CTOR(UAINiagaraEditorMode);
-	struct Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics
+	struct Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics
 	{
 		static const FClassRegisterCompiledInInfo ClassInfo[];
 	};
-	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo[] = {
-		{ Z_Construct_UClass_UAINiagaraEditorMode, UAINiagaraEditorMode::StaticClass, TEXT("UAINiagaraEditorMode"), &Z_Registration_Info_UClass_UAINiagaraEditorMode, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraEditorMode), 4232115193U) },
+	const FClassRegisterCompiledInInfo Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo[] = {
+		{ Z_Construct_UClass_UAINiagaraEditorMode, UAINiagaraEditorMode::StaticClass, TEXT("UAINiagaraEditorMode"), &Z_Registration_Info_UClass_UAINiagaraEditorMode, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UAINiagaraEditorMode), 2015245212U) },
 	};
-	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_1619214858(TEXT("/Script/AINiagara"),
-		Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_NetworkSample_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo),
+	static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_548190254(TEXT("/Script/AINiagara"),
+		Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo, UE_ARRAY_COUNT(Z_CompiledInDeferFile_FID_G__ToS_Plugins_AINiagara_Source_AINiagara_Public_AINiagaraEditorMode_h_Statics::ClassInfo),
 		nullptr, 0,
 		nullptr, 0);
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

@@ -67,7 +67,10 @@ struct FMaterialGenerationResult
 	FString MaterialPath;
 };
 
-DECLARE_DELEGATE_OneParam(FOnMaterialGenerated, const FMaterialGenerationResult& Result);
+/**
+ * Delegate called when material generation completes
+ */
+DECLARE_DELEGATE_OneParam(FOnMaterialGenerated, const FMaterialGenerationResult&);
 
 /**
  * Handler for material generation from specifications
@@ -85,7 +88,6 @@ public:
 	 * @param PackagePath Package path for the material asset
 	 * @param OnComplete Callback when generation completes
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Material")
 	static void GenerateMaterial(
 		const FMaterialGenerationRequest& Request,
 		const FString& PackagePath,

@@ -69,7 +69,10 @@ struct FTextureGenerationResult
 	int32 FrameCount = 1;
 };
 
-DECLARE_DELEGATE_OneParam(FOnTextureGenerated, const FTextureGenerationResult& Result);
+/**
+ * Delegate called when texture generation completes
+ */
+DECLARE_DELEGATE_OneParam(FOnTextureGenerated, const FTextureGenerationResult&);
 
 /**
  * Handler for texture generation using Gemini Imagen 3 API
@@ -86,7 +89,6 @@ public:
 	 * @param Request Texture generation parameters
 	 * @param OnComplete Callback when generation completes
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Texture")
 	static void GenerateTexture(
 		const FTextureGenerationRequest& Request,
 		FOnTextureGenerated OnComplete
@@ -97,7 +99,6 @@ public:
 	 * @param Request Texture generation parameters (with Frames > 1)
 	 * @param OnComplete Callback when generation completes
 	 */
-	UFUNCTION(BlueprintCallable, Category = "AINiagara|Texture")
 	static void GenerateFlipbook(
 		const FTextureGenerationRequest& Request,
 		FOnTextureGenerated OnComplete
