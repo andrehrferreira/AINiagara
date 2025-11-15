@@ -16,9 +16,11 @@
 #include "Particles/ParticleModuleRotation.h"
 #include "Particles/ParticleModuleRotationRate.h"
 #include "Particles/ParticleModuleTypeDataBase.h"
-#include "Particles/TypeData/ParticleModuleTypeDataMesh.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UObject/Package.h"
+#include "UObject/UObjectGlobals.h"
+#include "UObject/Class.h"
+#include "UObject/PropertyAccessUtil.h"
 #include "Misc/MessageDialog.h"
 
 bool UCascadeSystemGenerator::CreateSystemFromDSL(
@@ -543,40 +545,58 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 			// Apply mesh if loaded
 			if (MeshAsset)
 			{
-				// Find or create TypeData mesh module
-				UParticleModuleTypeDataMesh* MeshTypeData = nullptr;
-				for (UParticleModule* Module : Emitter->TypeDataModules)
+				// Use dynamic class loading for UE 5.3 compatibility
+				UClass* MeshTypeDataClass = FindObject<UClass>(ANY_PACKAGE, TEXT("ParticleModuleTypeDataMesh"));
+				if (MeshTypeDataClass)
 				{
-					if (UParticleModuleTypeDataMesh* MeshData = Cast<UParticleModuleTypeDataMesh>(Module))
+					// Find or create TypeData mesh module
+					UParticleModule* MeshTypeData = nullptr;
+					for (UParticleModule* Module : Emitter->TypeDataModules)
 					{
-						MeshTypeData = MeshData;
-						break;
+						if (Module && Module->GetClass() == MeshTypeDataClass)
+						{
+							MeshTypeData = Module;
+							break;
+						}
 					}
-				}
 
-				if (!MeshTypeData)
-				{
-					MeshTypeData = NewObject<UParticleModuleTypeDataMesh>(Emitter);
+					if (!MeshTypeData)
+					{
+						MeshTypeData = NewObject<UParticleModule>(Emitter, MeshTypeDataClass);
+						if (MeshTypeData)
+						{
+							Emitter->TypeDataModules.Add(MeshTypeData);
+						}
+					}
+
 					if (MeshTypeData)
 					{
-						Emitter->TypeDataModules.Add(MeshTypeData);
+						// Set mesh property via reflection for UE 5.3 compatibility
+						FProperty* MeshProperty = MeshTypeDataClass->FindPropertyByName(TEXT("Mesh"));
+						if (MeshProperty)
+						{
+							UObject** MeshPtr = MeshProperty->ContainerPtrToValuePtr<UObject*>(MeshTypeData);
+							if (MeshPtr)
+							{
+								*MeshPtr = MeshAsset;
+							}
+						}
+						
+						// Set scale
+						if (RenderDSL.Mesh.Scale > 0.0f)
+						{
+							// Scale is applied through size module, which is configured separately
+							// For mesh particles, size affects mesh scale
+						}
+						
+						// Note: Rotation is typically handled through rotation modules, not in TypeData
+						// This is a simplified implementation - full rotation support would require
+						// additional rotation modules (UParticleModuleRotation, etc.)
 					}
 				}
-
-				if (MeshTypeData)
+				else
 				{
-					MeshTypeData->Mesh = MeshAsset;
-					
-					// Set scale
-					if (RenderDSL.Mesh.Scale > 0.0f)
-					{
-						// Scale is applied through size module, which is configured separately
-						// For mesh particles, size affects mesh scale
-					}
-					
-					// Note: Rotation is typically handled through rotation modules, not in TypeData
-					// This is a simplified implementation - full rotation support would require
-					// additional rotation modules (UParticleModuleRotation, etc.)
+					UE_LOG(LogTemp, Warning, TEXT("ParticleModuleTypeDataMesh class not found. Mesh support may not be available in this UE version."));
 				}
 			}
 			else if (RenderDSL.Mesh.bUseMesh)
