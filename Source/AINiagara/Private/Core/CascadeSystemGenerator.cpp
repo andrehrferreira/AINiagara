@@ -468,7 +468,7 @@ bool UCascadeSystemGenerator::ConfigureRenderModule(
 		{
 			RequiredModule->BlendMode = BLEND_Opaque;
 		}
-		else 		else if (RenderDSL.BlendMode.Equals(TEXT("Modulate"), ESearchCase::IgnoreCase))
+		else if (RenderDSL.BlendMode.Equals(TEXT("Modulate"), ESearchCase::IgnoreCase))
 		{
 			RequiredModule->BlendMode = BLEND_Modulate;
 		}
